@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Prizm Energy Outlook Add-in v2
+  ===============================
+  - Single Menu control surfacing multiple ERP actions in Outlook's message
+    action submenu (matches the snapshot pattern: Asana / Share to Teams / etc).
+  - All UI assets are served from GitHub Pages. As long as URLs stay stable,
+    pushing to main = live update inside Outlook without re-sideloading.
+  - To add a new action: add an <Item> below + a view module in src/js/views.
+-->
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
+  xsi:type="MailApp">
+
+  <Id>b1f3a2c4-7d59-4e21-9c8e-prizm00000002</Id>
+  <Version>2.0.0.0</Version>
+  <ProviderName>Prizm Energy</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Prizm Energy ERP"/>
+  <Description DefaultValue="One-click bridge between Outlook and Prizm Energy ERP: create tasks, opportunities, leads, tickets and link emails to records."/>
+  <IconUrl DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/assets/icon-64.png"/>
+  <HighResolutionIconUrl DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/assets/icon-128.png"/>
+  <SupportUrl DefaultValue="https://github.com/Ghazalawy/prizm-outlook-addin"/>
+
+  <AppDomains>
+    <AppDomain>https://ghazalawy.github.io</AppDomain>
+    <AppDomain>https://ms.prizm-energy.com</AppDomain>
+    <AppDomain>https://www.prizm-energy.com</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Mailbox"/>
+  </Hosts>
+
+  <Requirements>
+    <Sets>
+      <Set Name="Mailbox" MinVersion="1.5"/>
+    </Sets>
+  </Requirements>
+
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/taskpane.html"/>
+        <RequestedHeight>450</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+
+  <Permissions>ReadWriteMailbox</Permissions>
+
+  <Rule xsi:type="RuleCollection" Mode="Or">
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Edit"/>
+  </Rule>
+
+  <DisableEntityHighlighting>false</DisableEntityHighlighting>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Requirements>
+      <bt:Sets DefaultMinVersion="1.5">
+        <bt:Set Name="Mailbox"/>
+      </bt:Sets>
+    </Requirements>
+
+    <Hosts>
+      <Host xsi:type="MailHost">
+        <DesktopFormFactor>
+          <FunctionFile resid="Commands.Url"/>
+
+          <!-- ================= Reading email: Menu in the message-read ribbon ================= -->
+          <ExtensionPoint xsi:type="MessageReadCommandSurface">
+            <OfficeTab id="TabDefault">
+              <Group id="prizmReadGroup">
+                <Label resid="GroupLabel"/>
+
+                <Control xsi:type="Menu" id="prizmReadMenu">
+                  <Label resid="Menu.Label"/>
+                  <Supertip>
+                    <Title resid="Menu.Label"/>
+                    <Description resid="Menu.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Items>
+
+                    <Item id="readCreateTask">
+                      <Label resid="CreateTask.Label"/>
+                      <Supertip>
+                        <Title resid="CreateTask.Label"/>
+                        <Description resid="CreateTask.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.CreateTask.Url"/>
+                      </Action>
+                    </Item>
+
+                    <Item id="readCreateOpportunity">
+                      <Label resid="CreateOpp.Label"/>
+                      <Supertip>
+                        <Title resid="CreateOpp.Label"/>
+                        <Description resid="CreateOpp.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.CreateOpp.Url"/>
+                      </Action>
+                    </Item>
+
+                    <Item id="readCreateLead">
+                      <Label resid="CreateLead.Label"/>
+                      <Supertip>
+                        <Title resid="CreateLead.Label"/>
+                        <Description resid="CreateLead.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.CreateLead.Url"/>
+                      </Action>
+                    </Item>
+
+                    <Item id="readCreateTicket">
+                      <Label resid="CreateTicket.Label"/>
+                      <Supertip>
+                        <Title resid="CreateTicket.Label"/>
+                        <Description resid="CreateTicket.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.CreateTicket.Url"/>
+                      </Action>
+                    </Item>
+
+                    <Item id="readLinkRecord">
+                      <Label resid="LinkRecord.Label"/>
+                      <Supertip>
+                        <Title resid="LinkRecord.Label"/>
+                        <Description resid="LinkRecord.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.LinkRecord.Url"/>
+                      </Action>
+                    </Item>
+
+                    <Item id="readLookupSender">
+                      <Label resid="LookupSender.Label"/>
+                      <Supertip>
+                        <Title resid="LookupSender.Label"/>
+                        <Description resid="LookupSender.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.LookupSender.Url"/>
+                      </Action>
+                    </Item>
+
+                    <Item id="readOpenHome">
+                      <Label resid="Home.Label"/>
+                      <Supertip>
+                        <Title resid="Home.Label"/>
+                        <Description resid="Home.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.Home.Url"/>
+                      </Action>
+                    </Item>
+
+                  </Items>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+
+          <!-- ================= Composing email: same Menu on compose surface ================= -->
+          <ExtensionPoint xsi:type="MessageComposeCommandSurface">
+            <OfficeTab id="TabDefault">
+              <Group id="prizmComposeGroup">
+                <Label resid="GroupLabel"/>
+
+                <Control xsi:type="Menu" id="prizmComposeMenu">
+                  <Label resid="Menu.Label"/>
+                  <Supertip>
+                    <Title resid="Menu.Label"/>
+                    <Description resid="Menu.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Items>
+                    <Item id="composeCreateTask">
+                      <Label resid="CreateTask.Label"/>
+                      <Supertip>
+                        <Title resid="CreateTask.Label"/>
+                        <Description resid="CreateTask.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.CreateTask.Url"/>
+                      </Action>
+                    </Item>
+                    <Item id="composeOpenHome">
+                      <Label resid="Home.Label"/>
+                      <Supertip>
+                        <Title resid="Home.Label"/>
+                        <Description resid="Home.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.Home.Url"/>
+                      </Action>
+                    </Item>
+                  </Items>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/assets/icon-80.png"/>
+      </bt:Images>
+
+      <bt:Urls>
+        <bt:Url id="Commands.Url"               DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/commands.html"/>
+        <bt:Url id="Taskpane.Home.Url"          DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/taskpane.html#/home"/>
+        <bt:Url id="Taskpane.CreateTask.Url"    DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/taskpane.html#/create-task"/>
+        <bt:Url id="Taskpane.CreateOpp.Url"     DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/taskpane.html#/create-opportunity"/>
+        <bt:Url id="Taskpane.CreateLead.Url"    DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/taskpane.html#/create-lead"/>
+        <bt:Url id="Taskpane.CreateTicket.Url"  DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/taskpane.html#/create-ticket"/>
+        <bt:Url id="Taskpane.LinkRecord.Url"    DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/taskpane.html#/link-record"/>
+        <bt:Url id="Taskpane.LookupSender.Url"  DefaultValue="https://ghazalawy.github.io/prizm-outlook-addin/taskpane.html#/lookup-sender"/>
+      </bt:Urls>
+
+      <bt:ShortStrings>
+        <bt:String id="GroupLabel"           DefaultValue="Prizm ERP"/>
+        <bt:String id="Menu.Label"           DefaultValue="Prizm ERP"/>
+        <bt:String id="Home.Label"           DefaultValue="Open Prizm ERP"/>
+        <bt:String id="CreateTask.Label"     DefaultValue="Create Task"/>
+        <bt:String id="CreateOpp.Label"      DefaultValue="Create Opportunity"/>
+        <bt:String id="CreateLead.Label"     DefaultValue="Create Lead"/>
+        <bt:String id="CreateTicket.Label"   DefaultValue="Create Ticket"/>
+        <bt:String id="LinkRecord.Label"     DefaultValue="Link to Record"/>
+        <bt:String id="LookupSender.Label"   DefaultValue="Look up sender"/>
+      </bt:ShortStrings>
+
+      <bt:LongStrings>
+        <bt:String id="Menu.Tooltip"         DefaultValue="Prizm Energy ERP bridge — create records and link this email to your CRM."/>
+        <bt:String id="Home.Tooltip"         DefaultValue="Open the Prizm ERP add-in home with all available actions."/>
+        <bt:String id="CreateTask.Tooltip"   DefaultValue="Create a new task in Prizm ERP pre-filled from this email."/>
+        <bt:String id="CreateOpp.Tooltip"    DefaultValue="Create a new opportunity in Prizm ERP from this email and sender."/>
+        <bt:String id="CreateLead.Tooltip"   DefaultValue="Create a lead from the sender of this email."/>
+        <bt:String id="CreateTicket.Tooltip" DefaultValue="Open a support ticket pre-filled from this email."/>
+        <bt:String id="LinkRecord.Tooltip"   DefaultValue="Attach this email (and attachments) to an existing ERP record."/>
+        <bt:String id="LookupSender.Tooltip" DefaultValue="Search Prizm ERP for the email sender and view related records."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

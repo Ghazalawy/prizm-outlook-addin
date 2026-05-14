@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Cache busting: Outlook caches the WebView; these headers + JS query string force re-fetch -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Prizm Energy ERP</title>
+
+  <!-- Office.js (required) -->
+  <script src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+
+  <!-- Office UI Fabric (light, just for icons + base look) -->
+  <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css" />
+
+  <!-- Our styles. Query-string version param is rewritten on every deploy by the GH Actions workflow -->
+  <link rel="stylesheet" href="styles/taskpane.css?v=DEPLOY_VERSION" />
+</head>
+<body class="ms-Fabric">
+  <!-- Loading splash shown until Office.js is ready -->
+  <div id="splash" class="splash">
+    <img src="assets/logo.png" alt="Prizm Energy" class="splash__logo" />
+    <div class="splash__title">Prizm Energy ERP</div>
+    <div class="splash__spinner"></div>
+  </div>
+
+  <!-- Top bar with breadcrumb + home button. Hidden until ready. -->
+  <header id="topbar" class="topbar" hidden>
+    <button id="backBtn" class="topbar__back" title="Back" aria-label="Back">&larr;</button>
+    <div id="crumb" class="topbar__crumb">Home</div>
+    <button id="reloadBtn" class="topbar__reload" title="Reload add-in (fetch latest)" aria-label="Reload">&#x21bb;</button>
+  </header>
+
+  <!-- Where each view renders. Views replace this content. -->
+  <main id="view" class="view" hidden></main>
+
+  <!-- Sticky footer with version + ERP base info -->
+  <footer id="footer" class="footer" hidden>
+    <span id="footerVersion">v—</span>
+    <span class="footer__sep">·</span>
+    <a id="footerErpLink" href="#" target="_blank" rel="noopener">ERP</a>
+  </footer>
+
+  <!-- App entry. type=module so we can use real ES imports. -->
+  <script type="module" src="js/app.js?v=DEPLOY_VERSION"></script>
+</body>
+</html>
