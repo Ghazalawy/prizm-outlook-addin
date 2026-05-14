@@ -28,6 +28,7 @@
   <AppDomains>
     <AppDomain>https://ghazalawy.github.io</AppDomain>
     <AppDomain>https://ms.prizm-energy.com</AppDomain>
+    <AppDomain>https://dev.prizm-energy.com</AppDomain>
     <AppDomain>https://www.prizm-energy.com</AppDomain>
   </AppDomains>
 

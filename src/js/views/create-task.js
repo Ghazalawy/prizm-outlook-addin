@@ -71,16 +71,10 @@ export async function render() {
         assignees: Array.from(inputs.assignees.selectedOptions).map((o) => o.value),
         tags: inputs.tags.value.split(',').map((t) => t.trim()).filter(Boolean),
         description: inputs.description.value,
-        email: {
-          itemId: snap.itemId,
-          internetMessageId: snap.internetMessageId,
-          conversationId: snap.conversationId,
-          from: snap.from,
-          to: snap.to,
-          receivedAt: snap.receivedAt,
+        email: Office.envelope(snap, {
           attachEmailAsEml: inputs.attachEmail.checked,
-          attachments: inputs.attachFiles.checked ? snap.attachments : [],
-        },
+          attachFiles:      inputs.attachFiles.checked,
+        }),
       };
 
       if (!payload.subject) {

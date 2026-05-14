@@ -37,7 +37,7 @@ export async function render() {
         closeDate: inputs.closeDate.value,
         stage: inputs.stage.value,
         notes: inputs.notes.value,
-        email: { itemId: snap.itemId, internetMessageId: snap.internetMessageId, subject: snap.subject, from: snap.from },
+        email: Office.envelope(snap, { attachEmailAsEml: true, attachFiles: false }),
       };
       if (!payload.name) {
         status.replaceChildren(banner('err', 'Name is required.'));

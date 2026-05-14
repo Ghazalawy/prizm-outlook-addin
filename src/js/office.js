@@ -94,6 +94,25 @@ export const Office = {
   },
 
   /**
+   * Get the item ID converted to REST (Graph) format.
+   * Outlook gives us an EWS ID by default; Graph endpoints expect the v2 REST ID.
+   * `convertToRestId` is a no-op when the ID is already in REST format.
+   * Returns the raw itemId if Office.js isn't available (browser test mode).
+   */
+  getRestItemId() {
+    const item = this.item();
+    if (!item?.itemId) return null;
+    const mbx = window.Office?.context?.mailbox;
+    const enums = window.Office?.MailboxEnums;
+    if (mbx?.convertToRestId && enums?.RestVersion?.v2_0) {
+      try {
+        return mbx.convertToRestId(item.itemId, enums.RestVersion.v2_0);
+      } catch (_) { /* fall through */ }
+    }
+    return item.itemId;
+  },
+
+  /**
    * Get a token for the ERP backend to call Graph on behalf of the user
    * (only relevant if the ERP is set up as an Azure AD app). Falls back to null.
    */
@@ -107,6 +126,29 @@ export const Office = {
     });
   },
 
+  /**
+   * Standard email envelope every create-X view sends to the ERP.
+   * Centralised so we don't drift between views.
+   *
+   * @param {object} snap  - result of snapshot()
+   * @param {object} opts  - { attachEmailAsEml: bool, attachFiles: bool }
+   */
+  envelope(snap, opts = {}) {
+    return {
+      itemId: snap.itemId,                  // REST/Graph-compatible
+      rawItemId: snap.rawItemId,            // EWS form for fallback
+      internetMessageId: snap.internetMessageId,
+      conversationId: snap.conversationId,
+      subject: snap.subject,
+      from: snap.from,
+      to: snap.to,
+      receivedAt: snap.receivedAt,
+      mailbox: snap.mailbox,                // tells the ERP which user's mailbox to fetch from via Graph
+      attachEmailAsEml: !!opts.attachEmailAsEml,
+      attachments: opts.attachFiles ? (snap.attachments || []) : [],
+    };
+  },
+
   /** Build a snapshot of the current email for any "create from email" view. */
   async snapshot() {
     const item = this.item();
@@ -115,6 +157,7 @@ export const Office = {
       this.getBodyText(),
       this.getTo(),
     ]);
+    const restItemId = this.getRestItemId();
     return {
       subject,
       bodyText: body,
@@ -123,9 +166,11 @@ export const Office = {
       to,
       attachments: this.getAttachments(),
       internetMessageId: this.getInternetMessageId(),
-      itemId: item?.itemId || null,
+      itemId: restItemId,
+      rawItemId: item?.itemId || null,
       conversationId: item?.conversationId || null,
       receivedAt: item?.dateTimeCreated || null,
+      mailbox: this.userProfile().emailAddress || null,
     };
   },
 };

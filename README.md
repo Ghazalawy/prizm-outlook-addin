@@ -116,8 +116,14 @@ because Outlook caches the manifest.
 The backend lives in the Perfex CRM `outlookapi` module, controller
 [`Bridge.php`](https://github.com/Ghazalawy/prizm331/blob/main/modules/outlookapi/controllers/Bridge.php).
 
-Default `apiBase` is `https://ms.prizm-energy.com/dev/outlookapi/bridge`
-(override per user in the add-in's Settings view).
+Default `apiBase` is `https://ms.prizm-energy.com/MS/outlookapi/bridge` (the
+Hetzner production deploy from `PrizmIT/prizm331`). Override per browser/profile
+in the add-in's Settings view to use dev:
+
+| Env  | ERP base                                | API base                                                |
+|------|-----------------------------------------|---------------------------------------------------------|
+| Prod | `https://ms.prizm-energy.com/MS`        | `https://ms.prizm-energy.com/MS/outlookapi/bridge`      |
+| Dev  | `https://dev.prizm-energy.com`          | `https://dev.prizm-energy.com/outlookapi/bridge`        |
 
 | Method | Path             | Used by                                |
 |--------|------------------|----------------------------------------|
@@ -134,9 +140,26 @@ Default `apiBase` is `https://ms.prizm-energy.com/dev/outlookapi/bridge`
 ### Auth
 
 `Authorization: Bearer <api_key>` on every request. Each Perfex staff user
-generates their own key from
-**Admin sidebar → Outlook → Add-in API keys** (`/admin/outlookapi/keys`).
+generates their own key from **Admin sidebar → Outlook → Add-in API keys**:
+
+- Prod: <https://ms.prizm-energy.com/MS/admin/outlookapi/keys>
+- Dev:  <https://dev.prizm-energy.com/admin/outlookapi/keys>
+
 The key is shown **once** on creation; revoke or regenerate any time.
+
+### Attachment handling
+
+When you tick *"Attach this email as .eml"* or *"Attach N email attachment(s)"*
+on any Create / Link view, the ERP fetches the bytes directly from Microsoft
+Graph (using the existing app-only token from the `outlookapi` module) and
+saves them under the matching Perfex uploads folder
+(`uploads/tasks/<id>/`, `uploads/leads/<id>/`, `uploads/ticket_attachments/<id>/`,
+`uploads/projects/<id>/`, `uploads/opportunities/<id>/`). The files appear in
+the record's normal *Attachments* tab — same as if you'd uploaded them by hand.
+
+Files never transit the Outlook → Pages → ERP path. The add-in only sends
+metadata `{id, name, size, contentType, mailbox, itemId}`; the bytes are
+pulled server-to-server.
 
 All POSTs accept a JSON body with form fields plus an `email` envelope:
 ```json

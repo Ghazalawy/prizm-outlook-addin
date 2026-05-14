@@ -30,11 +30,7 @@ export async function render() {
         priority: inputs.priority.value,
         department: inputs.department.value.trim(),
         body: inputs.body.value,
-        email: {
-          itemId: snap.itemId,
-          internetMessageId: snap.internetMessageId,
-          attachments: snap.attachments,
-        },
+        email: Office.envelope(snap, { attachEmailAsEml: true, attachFiles: true }),
       };
       if (!payload.subject) {
         status.replaceChildren(banner('err', 'Subject is required.'));
