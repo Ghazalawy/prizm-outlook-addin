@@ -123,8 +123,18 @@
   <div class="changelog">
 
     <div class="entry">
-      <h4>Picker polish, success UX, related-record initial list</h4>
+      <h4>Home shows what's done on this email + version in DisplayName</h4>
       <div class="meta" id="latestBuildTag">build —</div>
+      <ul>
+        <li>Home grid now highlights tiles green and shows a small <em>"#N · created Mon DD"</em> caption when an action has already been performed on the current email (powered by <code>tbloutlook_email_links</code>).</li>
+        <li>"Link to Record" tile shows a "Linked to N records" rollup when one or more records are attached.</li>
+        <li>Manifest <code>DisplayName</code> now includes the version suffix (e.g. <em>"Prizm Energy ERP v2.0.16.0"</em>) so Outlook's <em>My add-ins</em> shows the version next to the name without needing to open details.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>Picker polish, success UX, related-record initial list</h4>
+      <div class="meta">build 7327844</div>
       <ul>
         <li>Assignees / Tags / Related-record pickers collapse the dropdown after selection — click the field again to re-open.</li>
         <li>Related-record picker now shows an initial list of <em>active / recent</em> items the moment you click in (10 by default, "Show all" for the next 100). Backend filters projects to non-cancelled, customers to active, leads to most recent, etc.</li>

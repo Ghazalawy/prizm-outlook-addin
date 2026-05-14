@@ -133,6 +133,23 @@ html, body {
 .action-tile__icon { font-size: 18px; margin-bottom: 6px; }
 .action-tile__title { font-weight: 600; font-size: 12.5px; }
 .action-tile__sub   { color: var(--prizm-muted); font-size: 11.5px; margin-top: 2px; }
+.action-tile__done  {
+  font-size: 10.5px;
+  font-style: italic;
+  color: var(--prizm-primary);
+  margin-top: 4px;
+  font-weight: 500;
+}
+.action-tile--done {
+  background: #e7f6ec;
+  border-color: #b6e2c4;
+}
+.action-tile--done .action-tile__icon { color: var(--prizm-primary); }
+@media (prefers-color-scheme: dark) {
+  .action-tile--done { background: #14301e; border-color: #2a5b3a; }
+  .action-tile__done { color: #8fd6a8; }
+  .action-tile--done .action-tile__icon { color: #8fd6a8; }
+}
 
 /* ---------- Email context banner ---------- */
 .ctx {
