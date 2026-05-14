@@ -17,12 +17,11 @@ export function go(path) {
   }
 }
 
+// Always navigate explicitly — window.history.back() is unreliable inside
+// Outlook's task pane iframe (history can be empty or cross-origin-blocked),
+// which is why the back arrow looked dead.
 export function back() {
-  if (window.history.length > 1) {
-    window.history.back();
-  } else {
-    go('/home');
-  }
+  go('/home');
 }
 
 async function render() {
@@ -50,6 +49,10 @@ async function render() {
       return;
     }
   }
+
+  // Hide back arrow on the root view since there's nowhere to go back to.
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) backBtn.style.visibility = (path === '/home') ? 'hidden' : 'visible';
 
   if (typeof currentTeardown === 'function') {
     try { currentTeardown(); } catch (_) { /* ignore */ }
