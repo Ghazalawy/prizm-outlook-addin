@@ -15,6 +15,28 @@ import { el, mount, field, row, banner, contextBanner, chipsPicker, asyncSearchP
 
 function gotoSettings() { window.__prizmGo('/settings'); }
 
+/**
+ * Open Outlook's reply composer with the task instructions as the body
+ * and a hyperlinked "Follow up task has been created #N" line above the
+ * user's signature (Outlook appends signature automatically).
+ */
+function openReplyWithTask(result, instructions) {
+  const item = window.Office?.context?.mailbox?.item;
+  if (!item || typeof item.displayReplyForm !== 'function') return;
+  const id = result?.id;
+  const url = result?.url || '';
+  const safeBody = (instructions || '').replace(/[&<>]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c])).replace(/\n/g, '<br>');
+  const followLine = url
+    ? `<a href="${url}">Follow up task has been created #${id}</a>`
+    : `Follow up task has been created #${id}`;
+  const html = `
+    <p>${safeBody || '&nbsp;'}</p>
+    <p>&mdash;</p>
+    <p>${followLine}</p>
+  `;
+  item.displayReplyForm({ htmlBody: html });
+}
+
 // refdata.priorities returns [{id,name,color}] from Perfex's get_tasks_priorities();
 // refdata.staff returns [{id,name}] from Outlookapi_model::getstaff;
 // refdata.tags returns ['name', ...] (just names from tbltags).
@@ -89,9 +111,16 @@ export async function render() {
       ...['project','customer','lead','opportunity','invoice','estimate','contract','ticket','expense','proposal']
         .map((t) => el('option', { value: t, text: t })),
     ),
-    description: el('textarea', { text: snap.bodyExcerpt || '' }),
-    attachEmail: el('input', { type: 'checkbox', checked: true }),
-    attachFiles: el('input', { type: 'checkbox', checked: snap.attachments?.length ? true : false }),
+    // Task description — empty by default; the user writes instructions
+    // for the assignees. The email body is included separately via the
+    // includeEmail checkbox below.
+    description: el('textarea', {
+      placeholder: 'Task instructions for the assignees…\n(empty by default — write what you want done)',
+    }),
+    includeEmail: el('input', { type: 'checkbox', checked: true }),
+    attachEmail:  el('input', { type: 'checkbox', checked: true }),
+    attachFiles:  el('input', { type: 'checkbox', checked: snap.attachments?.length ? true : false }),
+    notifySender: el('input', { type: 'checkbox', checked: false }),
   };
 
   // Populate the related-record row with the picker; toggle on relatedTo change.
@@ -117,7 +146,8 @@ export async function render() {
 
   const submitBtn  = el('button', { class: 'btn',         type: 'submit' }, 'Create task in Prizm ERP');
   const cancelBtn  = el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => window.__prizmGo('/home') }, 'Cancel');
-  const actionRow  = el('div',    { class: 'btn-row btn-row--split' }, cancelBtn, submitBtn);
+  // Primary on the left, secondary on the right (user preference).
+  const actionRow  = el('div',    { class: 'btn-row btn-row--split' }, submitBtn, cancelBtn);
   const status     = el('div',    {});
 
   function fmtWhen(iso) {
@@ -134,16 +164,17 @@ export async function render() {
 
     status.replaceChildren(banner('ok', `Task #${id} created on ${when} by ${who}.`));
 
-    // Replace the action row with the View / Create another 50-50 split.
+    // Replace the action row with View task / Create another 50-50 split.
+    // Primary action (View in ERP) on the LEFT to match the form layout.
     const viewBtn = el('button', {
-      class: 'btn btn--ghost',
+      class: 'btn',
       type: 'button',
       onclick: () => window.open(url, '_blank', 'noopener'),
       disabled: !url || undefined,
     }, 'View task in ERP');
 
     const againBtn = el('button', {
-      class: 'btn',
+      class: 'btn btn--ghost',
       type: 'button',
       onclick: () => window.__prizmGo('/create-task'), // re-renders from scratch
     }, 'Create another');
@@ -159,6 +190,15 @@ export async function render() {
       submitBtn.textContent = 'Creating...';
 
       const related = relatedRecordPicker.get();
+
+      // Description = user instructions + (optionally) the email body
+      const taskInstructions = (inputs.description.value || '').trim();
+      const emailBody = inputs.includeEmail.checked ? (snap.bodyExcerpt || '') : '';
+      const combinedDescription = [
+        taskInstructions,
+        emailBody ? `\n\n---\nOriginal email:\n${emailBody}` : '',
+      ].join('').trim();
+
       const payload = {
         subject: inputs.subject.value.trim(),
         startDate: inputs.startDate.value,
@@ -169,7 +209,7 @@ export async function render() {
         relatedLabel: related?.label ?? null,
         assignees: assigneesPicker.getSelected(),
         tags: tagsPicker.getSelected(),
-        description: inputs.description.value,
+        description: combinedDescription,
         email: Office.envelope(snap, {
           attachEmailAsEml: inputs.attachEmail.checked,
           attachFiles:      inputs.attachFiles.checked,
@@ -185,6 +225,13 @@ export async function render() {
 
       try {
         const result = await Api.createTask(payload);
+
+        // Optional: open a reply form pre-filled with the task instructions
+        // and a hyperlinked task ID. Outlook auto-appends the user's signature.
+        if (inputs.notifySender.checked) {
+          try { openReplyWithTask(result, taskInstructions); } catch (_) { /* non-fatal */ }
+        }
+
         renderSuccess(result);
       } catch (err) {
         const msg = err instanceof ApiError
@@ -221,13 +268,20 @@ export async function render() {
 
     field('Tags', tagsPicker.node, { hint: 'Type to filter existing tags or pick from list.' }),
 
-    field('Description', inputs.description),
+    field('Description', inputs.description, { hint: 'What needs to be done. This shows on the task and (if forwarded) in the reply body.' }),
 
     el('div', { class: 'field__check' },
-      inputs.attachEmail, el('label', { text: 'Attach this email as .eml to the task' }),
+      inputs.includeEmail, el('label', { text: 'Append the original email body to the task description' }),
     ),
     el('div', { class: 'field__check' },
-      inputs.attachFiles, el('label', { text: `Attach ${snap.attachments?.length || 0} email attachment(s)` }),
+      inputs.attachEmail, el('label', { text: 'Attach the email as .eml file to the task' }),
+    ),
+    el('div', { class: 'field__check' },
+      inputs.attachFiles, el('label', { text: `Attach the ${snap.attachments?.length || 0} email attachment(s) to the task` }),
+    ),
+    el('div', { class: 'field__check' },
+      inputs.notifySender,
+      el('label', { text: 'Forward to sender as a reply (your description + signature + "Follow up task #" link)' }),
     ),
 
     actionRow,

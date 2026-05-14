@@ -123,8 +123,20 @@
   <div class="changelog">
 
     <div class="entry">
-      <h4>Home shows what's done on this email + version in DisplayName</h4>
+      <h4>Task description split, forward-as-reply, button-order swap, legacy-task awareness</h4>
       <div class="meta" id="latestBuildTag">build —</div>
+      <ul>
+        <li><strong>Description</strong> is now an empty field for the user to write task instructions for the assignees. A new <em>"Append the original email body"</em> checkbox controls whether the email content gets stitched in below.</li>
+        <li>New <strong>"Forward to sender as a reply"</strong> checkbox: on successful task creation, opens a pre-filled Outlook reply with your description, a hyperlinked <em>"Follow up task has been created #N"</em>, and your signature.</li>
+        <li>Button order swapped: <strong>Create task</strong> (green primary) is now on the left; <strong>Cancel</strong> is on the right. After success the View/Create another pair follows the same primary-left layout.</li>
+        <li>Form spacing tightened — label sits visibly inside its own field group, with breathing room between sibling fields.</li>
+        <li>Home green tiles now recognise tasks created by the legacy <code>#PrizmTaskStart#</code> cron AND match on both <code>internet_message_id</code> and Outlook REST <code>itemId</code> — so removing/reinstalling the add-in or pre-v2 task data doesn't break the "already done" indicator.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>Home shows what's done on this email + version in DisplayName</h4>
+      <div class="meta">build 5272df9</div>
       <ul>
         <li>Home grid now highlights tiles green and shows a small <em>"#N · created Mon DD"</em> caption when an action has already been performed on the current email (powered by <code>tbloutlook_email_links</code>).</li>
         <li>"Link to Record" tile shows a "Linked to N records" rollup when one or more records are attached.</li>

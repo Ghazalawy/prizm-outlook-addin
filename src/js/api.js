@@ -67,7 +67,7 @@ export const Api = {
   refdata()                     { return request('/refdata'); },
   search(type, q, limit)        { return request('/search', { query: { type, q, limit } }); },
   lookupContact(email)          { return request('/lookup', { query: { email } }); },
-  emailStatus(messageId)        { return request('/email_status', { query: { messageId } }); },
+  emailStatus({ messageId, itemId } = {}) { return request('/email_status', { query: { messageId, itemId } }); },
   createTask(payload)           { return request('/tasks',         { method: 'POST', body: payload }); },
   createOpportunity(payload)    { return request('/opportunities', { method: 'POST', body: payload }); },
   createLead(payload)           { return request('/leads',         { method: 'POST', body: payload }); },

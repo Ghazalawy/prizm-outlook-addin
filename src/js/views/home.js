@@ -84,15 +84,20 @@ export async function render() {
   paint({});
 
   // Fetch in the background; re-paint with done-state when it lands.
-  let messageId = null;
+  // Send BOTH the RFC Message-Id and the Outlook REST item id — the backend
+  // matches on either, AND checks the legacy email-marker task log keyed by
+  // item id, so previously-created tasks on this email surface here even if
+  // the v2 add-in wasn't around when they were created.
+  let messageId = null, itemId = null;
   try {
     const snap = await Office.snapshot();
     messageId = snap?.internetMessageId || null;
+    itemId    = snap?.itemId || snap?.rawItemId || null;
   } catch (_) { /* not in Outlook, no email context */ }
-  if (!messageId) return;
+  if (!messageId && !itemId) return;
 
   try {
-    const status = await Api.emailStatus(messageId);
+    const status = await Api.emailStatus({ messageId, itemId });
     if (status && status.actions) paint(status.actions);
   } catch (_) {
     // Silent — if the user has no key yet they were already gated; if the
