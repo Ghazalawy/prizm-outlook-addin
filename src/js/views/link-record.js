@@ -83,16 +83,10 @@ export async function render() {
       try {
         await Api.linkEmail({
           target: { type: chosen.type, id: chosen.id },
-          email: {
-            itemId: snap.itemId,
-            internetMessageId: snap.internetMessageId,
-            subject: snap.subject,
-            from: snap.from,
-            to: snap.to,
-            receivedAt: snap.receivedAt,
+          email: Office.envelope(snap, {
             attachEmailAsEml: attachEmail.checked,
-            attachments: attachFiles.checked ? snap.attachments : [],
-          },
+            attachFiles:      attachFiles.checked,
+          }),
         });
         status.replaceChildren(banner('ok', `Email linked to ${chosen.type} "${chosen.label}".`));
         submit.textContent = 'Done'; submit.disabled = true;

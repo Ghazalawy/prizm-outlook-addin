@@ -39,7 +39,7 @@ export async function render() {
         source: inputs.source.value,
         status: inputs.status.value,
         notes: inputs.notes.value,
-        email_link: { itemId: snap.itemId, internetMessageId: snap.internetMessageId },
+        email_link: Office.envelope(snap, { attachEmailAsEml: true, attachFiles: false }),
       };
       if (!payload.email && !payload.name) {
         status.replaceChildren(banner('err', 'At least name or email is required.'));

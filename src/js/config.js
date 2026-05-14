@@ -5,9 +5,14 @@
  *
  * These are read once at app boot. Settings view can change them.
  */
+// Defaults target the Hetzner production deploy (PrizmIT upstream).
+// To point a single browser at dev (Bluehost / Ghazalawy fork) without
+// rebuilding, use the Settings view → API base URL:
+//   https://dev.prizm-energy.com/outlookapi/bridge
+//   https://dev.prizm-energy.com           (ERP base for "Open in ERP" links)
 const DEFAULTS = {
-  erpBase: 'https://ms.prizm-energy.com',
-  apiBase: 'https://ms.prizm-energy.com/api',
+  erpBase: 'https://ms.prizm-energy.com/MS',
+  apiBase: 'https://ms.prizm-energy.com/MS/outlookapi/bridge',
   apiKey: '',
   version: '2.0.0',
 };
