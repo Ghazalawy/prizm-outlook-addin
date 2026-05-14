@@ -182,22 +182,16 @@ Auth: `Authorization: Bearer <apiKey>` if `apiKey` is set in Settings.
 
 ## Sideloading (one-time)
 
-Manifest URL: **`https://ghazalawy.github.io/prizm-outlook-addin/manifest.xml`**
+Microsoft disabled **"Add from URL"** for custom Outlook add-ins in early
+2026 (anti-phishing). Sideload is now download-then-upload:
 
-### Outlook (web/M365)
+1. Visit the install page: **<https://ghazalawy.github.io/prizm-outlook-addin/>** → click *Download manifest*
+2. In Outlook (web or desktop): *Get add-ins → My add-ins → Add a custom add-in → **Add from File...*** → pick the manifest you just downloaded
+3. Confirm the consent prompt
 
-1. Outlook on the web → Get add-ins → My add-ins → Custom add-ins → Add from URL
-2. Paste the manifest URL above
-
-### Outlook desktop (admin deploy)
-
-For org-wide rollout, push the manifest via the Microsoft 365 Admin Center
-(Integrated apps → Upload custom apps → manifest URL).
-
-### Outlook desktop (per-user sideload)
-
-1. File → Get Add-ins → My add-ins → Add a custom add-in → Add from URL
-2. Paste the manifest URL
+The raw manifest is still at `https://ghazalawy.github.io/prizm-outlook-addin/manifest.xml`
+for admin tools that support manifest URLs (e.g. Microsoft 365 Admin Center →
+Integrated apps → Upload custom apps).
 
 ## Local development
 
