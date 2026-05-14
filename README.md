@@ -113,20 +113,30 @@ because Outlook caches the manifest.
 
 ## ERP backend contract
 
-The add-in calls these endpoints under `apiBase` (default
-`https://ms.prizm-energy.com/api`):
+The backend lives in the Perfex CRM `outlookapi` module, controller
+[`Bridge.php`](https://github.com/Ghazalawy/prizm331/blob/main/modules/outlookapi/controllers/Bridge.php).
 
-| Method | Path                       | Used by                |
-|--------|----------------------------|------------------------|
-| GET    | `/outlook/ping`            | Settings · Test        |
-| GET    | `/outlook/refdata`         | Create Task (staff/priorities/tags) |
-| GET    | `/outlook/search`          | Link to Record         |
-| GET    | `/outlook/lookup`          | Lookup Sender          |
-| POST   | `/outlook/tasks`           | Create Task            |
-| POST   | `/outlook/opportunities`   | Create Opportunity     |
-| POST   | `/outlook/leads`           | Create Lead            |
-| POST   | `/outlook/tickets`         | Create Ticket          |
-| POST   | `/outlook/link`            | Link to Record         |
+Default `apiBase` is `https://ms.prizm-energy.com/dev/outlookapi/bridge`
+(override per user in the add-in's Settings view).
+
+| Method | Path             | Used by                                |
+|--------|------------------|----------------------------------------|
+| GET    | `/ping`          | Settings · Test connection             |
+| GET    | `/refdata`       | Create Task (staff / priorities / tags)|
+| GET    | `/search`        | Link to Record                         |
+| GET    | `/lookup`        | Lookup Sender                          |
+| POST   | `/tasks`         | Create Task                            |
+| POST   | `/opportunities` | Create Opportunity                     |
+| POST   | `/leads`         | Create Lead                            |
+| POST   | `/tickets`       | Create Ticket                          |
+| POST   | `/link`          | Link to Record                         |
+
+### Auth
+
+`Authorization: Bearer <api_key>` on every request. Each Perfex staff user
+generates their own key from
+**Admin sidebar → Outlook → Add-in API keys** (`/admin/outlookapi/keys`).
+The key is shown **once** on creation; revoke or regenerate any time.
 
 All POSTs accept a JSON body with form fields plus an `email` envelope:
 ```json

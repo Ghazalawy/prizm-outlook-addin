@@ -1,16 +1,18 @@
 /**
  * Thin ERP API client. Centralises base URL, auth and error handling.
  *
- * Backend endpoints expected (extend on the ERP side as you add views):
- *   POST {apiBase}/outlook/tasks         -> create task from email
- *   POST {apiBase}/outlook/opportunities -> create opportunity
- *   POST {apiBase}/outlook/leads         -> create lead from sender
- *   POST {apiBase}/outlook/tickets       -> create ticket
- *   POST {apiBase}/outlook/link          -> link this email to an existing record
- *   GET  {apiBase}/outlook/lookup?email= -> find ERP records for a contact
- *   GET  {apiBase}/outlook/search?q=&type= -> autocomplete (project/customer/...)
- *   GET  {apiBase}/outlook/refdata       -> priorities, staff, tags, etc.
- *   GET  {apiBase}/outlook/ping          -> health + auth check
+ * Backend lives in the Perfex `outlookapi` module, controller `Bridge`:
+ *   POST {apiBase}/tasks         -> create task from email
+ *   POST {apiBase}/opportunities -> create opportunity
+ *   POST {apiBase}/leads         -> create lead from sender
+ *   POST {apiBase}/tickets       -> create ticket
+ *   POST {apiBase}/link          -> link this email to an existing record
+ *   GET  {apiBase}/lookup?email= -> find ERP records for a contact
+ *   GET  {apiBase}/search?type=&q= -> autocomplete (project/customer/...)
+ *   GET  {apiBase}/refdata       -> priorities, staff, tags
+ *   GET  {apiBase}/ping          -> health + auth check
+ *
+ * apiBase default points to `outlookapi/bridge` on the Perfex install.
  */
 import { Config } from './config.js';
 
@@ -61,15 +63,15 @@ async function request(path, { method = 'GET', body, query, signal } = {}) {
 }
 
 export const Api = {
-  ping()                        { return request('/outlook/ping'); },
-  refdata()                     { return request('/outlook/refdata'); },
-  search(type, q)               { return request('/outlook/search', { query: { type, q } }); },
-  lookupContact(email)          { return request('/outlook/lookup', { query: { email } }); },
-  createTask(payload)           { return request('/outlook/tasks',         { method: 'POST', body: payload }); },
-  createOpportunity(payload)    { return request('/outlook/opportunities', { method: 'POST', body: payload }); },
-  createLead(payload)           { return request('/outlook/leads',         { method: 'POST', body: payload }); },
-  createTicket(payload)         { return request('/outlook/tickets',       { method: 'POST', body: payload }); },
-  linkEmail(payload)            { return request('/outlook/link',          { method: 'POST', body: payload }); },
+  ping()                        { return request('/ping'); },
+  refdata()                     { return request('/refdata'); },
+  search(type, q)               { return request('/search', { query: { type, q } }); },
+  lookupContact(email)          { return request('/lookup', { query: { email } }); },
+  createTask(payload)           { return request('/tasks',         { method: 'POST', body: payload }); },
+  createOpportunity(payload)    { return request('/opportunities', { method: 'POST', body: payload }); },
+  createLead(payload)           { return request('/leads',         { method: 'POST', body: payload }); },
+  createTicket(payload)         { return request('/tickets',       { method: 'POST', body: payload }); },
+  linkEmail(payload)            { return request('/link',          { method: 'POST', body: payload }); },
 };
 
 export { ApiError };

@@ -7,7 +7,7 @@
  */
 const DEFAULTS = {
   erpBase: 'https://ms.prizm-energy.com',
-  apiBase: 'https://ms.prizm-energy.com/api',
+  apiBase: 'https://ms.prizm-energy.com/dev/outlookapi/bridge',
   apiKey: '',
   version: '2.0.0',
 };
