@@ -18,8 +18,12 @@ function setupChrome() {
 
   document.getElementById('backBtn').addEventListener('click', back);
   document.getElementById('reloadBtn').addEventListener('click', () => {
-    // Force re-fetch of all assets — useful after a redeploy.
-    window.location.reload();
+    // Outlook's WebView caches the iframe aggressively — a plain reload()
+    // re-uses the same cached JS/CSS even though Pages has new files.
+    // Force a fully fresh fetch by appending a cache-busting query param.
+    const u = new URL(window.location.href);
+    u.searchParams.set('_t', Date.now().toString(36));
+    window.location.replace(u.toString());
   });
 
   const { erpBase, version } = Config.all();

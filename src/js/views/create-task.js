@@ -11,7 +11,7 @@
 import { Office } from '../office.js';
 import { Api, ApiError } from '../api.js';
 import { Config } from '../config.js';
-import { el, mount, field, row, banner, contextBanner, chipsPicker } from '../ui.js';
+import { el, mount, field, row, banner, contextBanner, chipsPicker, asyncSearchPicker } from '../ui.js';
 
 function gotoSettings() { window.__prizmGo('/settings'); }
 
@@ -57,6 +57,19 @@ export async function render() {
   const assigneesPicker = chipsPicker({ options: staffList, placeholder: 'Search staff...' });
   const tagsPicker      = chipsPicker({ options: tagList,   placeholder: 'Search or type tag...', allowCreate: true });
 
+  // Related-record picker — async search that switches type when "Related to" changes.
+  // Empty until the user picks a related-to type.
+  let relatedType = '';
+  const relatedRecordPicker = asyncSearchPicker({
+    placeholder: 'Select "Related to" first',
+    search: async (q) => {
+      if (!relatedType) return [];
+      return Api.search(relatedType, q);
+    },
+  });
+  // Wrap so we can hide the whole row when Related to is empty.
+  const relatedRecordRow = el('div', { class: 'field', hidden: true });
+
   const inputs = {
     subject:    el('input', { type: 'text', value: snap.subject || '' }),
     startDate:  el('input', { type: 'date', value: todayIso }),
@@ -73,11 +86,31 @@ export async function render() {
       ...['project','customer','lead','opportunity','invoice','estimate','contract','ticket','expense','proposal']
         .map((t) => el('option', { value: t, text: t })),
     ),
-    relatedQuery: el('input', { type: 'search', placeholder: 'Search ERP records...' }),
     description: el('textarea', { text: snap.bodyExcerpt || '' }),
     attachEmail: el('input', { type: 'checkbox', checked: true }),
     attachFiles: el('input', { type: 'checkbox', checked: snap.attachments?.length ? true : false }),
   };
+
+  // Populate the related-record row with the picker; toggle on relatedTo change.
+  function refreshRelatedRow() {
+    const type = inputs.relatedTo.value;
+    relatedType = type;
+    relatedRecordPicker.clear();
+    if (!type) {
+      relatedRecordRow.hidden = true;
+      relatedRecordRow.replaceChildren();
+      return;
+    }
+    const pretty = type.charAt(0).toUpperCase() + type.slice(1);
+    relatedRecordPicker.setPlaceholder(`Search ${pretty}s…`);
+    relatedRecordRow.hidden = false;
+    relatedRecordRow.replaceChildren(
+      el('label', {}, `Pick a ${pretty}`),
+      relatedRecordPicker.node,
+      el('div', { class: 'field__hint', text: `Search by name. Required to link this task to a ${type}.` }),
+    );
+  }
+  inputs.relatedTo.addEventListener('change', refreshRelatedRow);
 
   const submitBtn = el('button', { class: 'btn btn--block', type: 'submit' }, 'Create task in Prizm ERP');
   const cancelBtn = el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => window.__prizmGo('/home') }, 'Cancel');
@@ -90,13 +123,15 @@ export async function render() {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Creating...';
 
+      const related = relatedRecordPicker.get();
       const payload = {
         subject: inputs.subject.value.trim(),
         startDate: inputs.startDate.value,
         dueDate: inputs.dueDate.value,
         priority: Number(inputs.priority.value) || 2,
         relatedTo: inputs.relatedTo.value || null,
-        relatedQuery: inputs.relatedQuery.value || null,
+        relatedId: related?.id ?? null,
+        relatedLabel: related?.label ?? null,
         assignees: assigneesPicker.getSelected(),
         tags: tagsPicker.getSelected(),
         description: inputs.description.value,
@@ -156,7 +191,7 @@ export async function render() {
       field('Related to', inputs.relatedTo),
     ),
 
-    field('Related record (search)', inputs.relatedQuery, { hint: 'Type project/customer/etc name to link this task to.' }),
+    relatedRecordRow,
 
     field('Assignees', assigneesPicker.node, { hint: 'Type to filter staff. Click to add, × to remove.' }),
 

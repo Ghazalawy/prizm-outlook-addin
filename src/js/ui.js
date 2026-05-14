@@ -156,6 +156,84 @@ export function chipsPicker({ options = [], selected = [], placeholder = 'Search
   return { node: wrap, getSelected: () => [...picked.keys()] };
 }
 
+/**
+ * Single-select async search picker.
+ * Type → debounced async call → dropdown of results → click sets the chosen
+ * record (and fills the input with its label). Re-typing clears the choice.
+ *
+ * @param {object} opts
+ * @param {(q: string) => Promise<Array<{id:any,label:string,sub?:string}>>} opts.search
+ * @param {string} [opts.placeholder='Search...']
+ * @param {(r: object) => void} [opts.onChange]
+ * @returns {{node: HTMLElement, get: () => object|null, clear: () => void, setPlaceholder: (s:string)=>void}}
+ */
+export function asyncSearchPicker({ search, placeholder = 'Search...', onChange } = {}) {
+  const input    = el('input', { type: 'search', placeholder, class: 'chips__input' });
+  const dropdown = el('div',   { class: 'chips__dropdown', hidden: true });
+  const wrap     = el('div',   { class: 'chips' }, input, dropdown);
+
+  let chosen = null;
+  let debounceTimer = null;
+  let reqId = 0;
+
+  function publish(value) {
+    chosen = value;
+    if (typeof onChange === 'function') onChange(chosen);
+  }
+
+  function showResults(items) {
+    dropdown.replaceChildren();
+    if (!items?.length) {
+      dropdown.appendChild(el('div', { class: 'chips__empty', text: 'No matches.' }));
+      return;
+    }
+    items.forEach((r) => {
+      const row = el('button', {
+        type: 'button', class: 'chips__opt',
+        onmousedown: (e) => {
+          e.preventDefault();
+          publish(r);
+          input.value = r.label;
+          dropdown.hidden = true;
+        },
+      },
+        el('div', { class: 'chips__opt-title', text: r.label }),
+        r.sub ? el('div', { class: 'chips__opt-sub', text: r.sub }) : null,
+      );
+      dropdown.appendChild(row);
+    });
+  }
+
+  input.addEventListener('input', () => {
+    publish(null);
+    clearTimeout(debounceTimer);
+    const q = input.value.trim();
+    if (!q) { dropdown.hidden = true; return; }
+    const myReq = ++reqId;
+    debounceTimer = setTimeout(async () => {
+      dropdown.hidden = false;
+      dropdown.replaceChildren(el('div', { class: 'chips__empty', text: 'Searching…' }));
+      try {
+        const results = await search(q);
+        if (myReq !== reqId) return; // stale response from earlier keystroke
+        showResults(results);
+      } catch (e) {
+        if (myReq !== reqId) return;
+        dropdown.replaceChildren(el('div', { class: 'chips__empty', text: 'Error: ' + e.message }));
+      }
+    }, 250);
+  });
+  input.addEventListener('focus', () => { if (input.value.trim()) dropdown.hidden = false; });
+  input.addEventListener('blur',  () => { setTimeout(() => { dropdown.hidden = true; }, 150); });
+
+  return {
+    node: wrap,
+    get: () => chosen,
+    clear: () => { publish(null); input.value = ''; dropdown.hidden = true; },
+    setPlaceholder: (s) => { input.placeholder = s; },
+  };
+}
+
 export function contextBanner(snapshot) {
   const rows = [];
   if (snapshot.from) {
