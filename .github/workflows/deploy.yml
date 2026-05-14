@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # so git rev-list --count HEAD sees full history
 
       - name: Build static site into ./dist
         run: |
