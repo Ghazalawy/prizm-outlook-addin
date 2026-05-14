@@ -67,6 +67,95 @@ export function fmtBytes(n) {
   return `${n.toFixed(n >= 10 || i === 0 ? 0 : 1)} ${u[i]}`;
 }
 
+/**
+ * Searchable multi-select with chip-style removable selections.
+ *
+ * @param {object} opts
+ * @param {Array<{id:any,name:string}>} opts.options - choices
+ * @param {Array<any>} [opts.selected=[]] - ids initially selected
+ * @param {string} [opts.placeholder='Search...']
+ * @returns {{node: HTMLElement, getSelected: () => any[]}}
+ */
+export function chipsPicker({ options = [], selected = [], placeholder = 'Search...', allowCreate = false } = {}) {
+  const picked = new Map();
+  options.forEach((o) => { if (selected.includes(o.id)) picked.set(o.id, o.name); });
+
+  const chipsRow = el('div', { class: 'chips__row' });
+  const input    = el('input', { type: 'search', placeholder, class: 'chips__input' });
+  const dropdown = el('div', { class: 'chips__dropdown', hidden: true });
+  const wrap     = el('div', { class: 'chips' }, chipsRow, input, dropdown);
+
+  function renderChips() {
+    chipsRow.replaceChildren();
+    [...picked.entries()].forEach(([id, name]) => {
+      chipsRow.appendChild(el('span', { class: 'chip' },
+        el('span', { class: 'chip__name', text: name }),
+        el('button', {
+          type: 'button', class: 'chip__x', 'aria-label': `Remove ${name}`,
+          onclick: () => { picked.delete(id); renderChips(); },
+        }, '×'),
+      ));
+    });
+  }
+
+  function pick(id, name) {
+    picked.set(id, name);
+    input.value = '';
+    renderChips();
+    renderDropdown('');
+  }
+
+  function renderDropdown(q) {
+    dropdown.replaceChildren();
+    const needle = (q || '').trim().toLowerCase();
+    const matches = options
+      .filter((o) => !picked.has(o.id))
+      .filter((o) => !needle || (o.name || '').toLowerCase().includes(needle))
+      .slice(0, 50);
+
+    matches.forEach((o) => {
+      dropdown.appendChild(el('button', {
+        type: 'button', class: 'chips__opt',
+        onmousedown: (e) => { e.preventDefault(); pick(o.id, o.name); },
+      }, o.name));
+    });
+
+    const exact = options.some((o) => (o.name || '').toLowerCase() === needle);
+    if (allowCreate && needle && !exact && !picked.has(needle)) {
+      dropdown.appendChild(el('button', {
+        type: 'button', class: 'chips__opt chips__opt--create',
+        onmousedown: (e) => { e.preventDefault(); pick(q.trim(), q.trim()); },
+      }, `+ Create "${q.trim()}"`));
+    }
+
+    if (!matches.length && !(allowCreate && needle)) {
+      dropdown.appendChild(el('div', { class: 'chips__empty', text: needle ? 'No matches.' : 'Start typing to filter.' }));
+    }
+  }
+
+  input.addEventListener('focus', () => { renderDropdown(input.value); dropdown.hidden = false; });
+  input.addEventListener('input', () => { renderDropdown(input.value); dropdown.hidden = false; });
+  input.addEventListener('blur',  () => { setTimeout(() => { dropdown.hidden = true; }, 150); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const needle = input.value.trim();
+      if (!needle) return;
+      const exact = options.find((o) => (o.name || '').toLowerCase() === needle.toLowerCase());
+      if (exact) { pick(exact.id, exact.name); return; }
+      if (allowCreate) pick(needle, needle);
+    } else if (e.key === 'Backspace' && !input.value && picked.size) {
+      // Quick remove: empty input + backspace pops the last chip
+      const last = [...picked.keys()].pop();
+      picked.delete(last);
+      renderChips();
+    }
+  });
+
+  renderChips();
+  return { node: wrap, getSelected: () => [...picked.keys()] };
+}
+
 export function contextBanner(snapshot) {
   const rows = [];
   if (snapshot.from) {

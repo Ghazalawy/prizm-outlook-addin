@@ -11,9 +11,17 @@
 import { Office } from '../office.js';
 import { Api, ApiError } from '../api.js';
 import { Config } from '../config.js';
-import { el, mount, field, row, banner, contextBanner } from '../ui.js';
+import { el, mount, field, row, banner, contextBanner, chipsPicker } from '../ui.js';
 
 function gotoSettings() { window.__prizmGo('/settings'); }
+
+// refdata.priorities returns [{id,name,color}] from Perfex's get_tasks_priorities();
+// refdata.staff returns [{id,name}] from Outlookapi_model::getstaff;
+// refdata.tags returns ['name', ...] (just names from tbltags).
+function normalizePriority(p) {
+  if (p && typeof p === 'object') return { id: p.id, name: p.name };
+  return { id: p, name: String(p) };
+}
 
 export async function render() {
   // Pre-flight: API key required for any create flow.
@@ -35,18 +43,30 @@ export async function render() {
   const dueIso = new Date(Date.now() + 7 * 86400_000).toISOString().slice(0, 10);
 
   // Refdata is optional — failure shouldn't block the form
-  let refdata = { priorities: ['Low','Medium','High','Urgent'], staff: [], tags: [] };
+  let refdata = { priorities: [{id:1,name:'Low'},{id:2,name:'Medium'},{id:3,name:'High'},{id:4,name:'Urgent'}], staff: [], tags: [] };
   try {
     const r = await Api.refdata();
     if (r) refdata = { ...refdata, ...r };
   } catch (_) { /* offline-friendly fallback */ }
+
+  const priorities = (refdata.priorities || []).map(normalizePriority);
+  const staffList  = (refdata.staff || []).map((s) => ({ id: s.id, name: s.name }));
+  const tagList    = (refdata.tags || []).map((t) => ({ id: t, name: t }));
+
+  // Chip pickers — selections survive across re-renders via getSelected()
+  const assigneesPicker = chipsPicker({ options: staffList, placeholder: 'Search staff...' });
+  const tagsPicker      = chipsPicker({ options: tagList,   placeholder: 'Search or type tag...', allowCreate: true });
 
   const inputs = {
     subject:    el('input', { type: 'text', value: snap.subject || '' }),
     startDate:  el('input', { type: 'date', value: todayIso }),
     dueDate:    el('input', { type: 'date', value: dueIso }),
     priority:   el('select', {},
-      ...refdata.priorities.map((p) => el('option', { value: p, text: p, selected: p === 'Medium' || undefined })),
+      ...priorities.map((p) => el('option', {
+        value: p.id,
+        text: p.name,
+        selected: (p.id === 2 || /medium/i.test(p.name)) || undefined,
+      })),
     ),
     relatedTo:  el('select', {},
       el('option', { value: '', text: '— none —' }),
@@ -54,13 +74,9 @@ export async function render() {
         .map((t) => el('option', { value: t, text: t })),
     ),
     relatedQuery: el('input', { type: 'search', placeholder: 'Search ERP records...' }),
-    assignees:  el('select', { multiple: true, size: 4 },
-      ...refdata.staff.map((s) => el('option', { value: s.id, text: s.name })),
-    ),
-    tags:       el('input', { type: 'text', placeholder: 'tag1, tag2' }),
-    description:el('textarea', { text: snap.bodyExcerpt || '' }),
-    attachEmail:el('input', { type: 'checkbox', checked: true }),
-    attachFiles:el('input', { type: 'checkbox', checked: snap.attachments?.length ? true : false }),
+    description: el('textarea', { text: snap.bodyExcerpt || '' }),
+    attachEmail: el('input', { type: 'checkbox', checked: true }),
+    attachFiles: el('input', { type: 'checkbox', checked: snap.attachments?.length ? true : false }),
   };
 
   const submitBtn = el('button', { class: 'btn btn--block', type: 'submit' }, 'Create task in Prizm ERP');
@@ -78,11 +94,11 @@ export async function render() {
         subject: inputs.subject.value.trim(),
         startDate: inputs.startDate.value,
         dueDate: inputs.dueDate.value,
-        priority: inputs.priority.value,
+        priority: Number(inputs.priority.value) || 2,
         relatedTo: inputs.relatedTo.value || null,
         relatedQuery: inputs.relatedQuery.value || null,
-        assignees: Array.from(inputs.assignees.selectedOptions).map((o) => o.value),
-        tags: inputs.tags.value.split(',').map((t) => t.trim()).filter(Boolean),
+        assignees: assigneesPicker.getSelected(),
+        tags: tagsPicker.getSelected(),
         description: inputs.description.value,
         email: Office.envelope(snap, {
           attachEmailAsEml: inputs.attachEmail.checked,
@@ -142,9 +158,9 @@ export async function render() {
 
     field('Related record (search)', inputs.relatedQuery, { hint: 'Type project/customer/etc name to link this task to.' }),
 
-    field('Assignees', inputs.assignees, { hint: 'Hold Ctrl to pick multiple.' }),
+    field('Assignees', assigneesPicker.node, { hint: 'Type to filter staff. Click to add, × to remove.' }),
 
-    field('Tags', inputs.tags, { hint: 'Comma separated.' }),
+    field('Tags', tagsPicker.node, { hint: 'Type to filter existing tags or pick from list.' }),
 
     field('Description', inputs.description),
 

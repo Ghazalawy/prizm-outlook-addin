@@ -203,6 +203,67 @@ html, body {
 .btn--block { width: 100%; justify-content: center; }
 .btn-row { display: flex; gap: 8px; margin-top: 10px; }
 
+/* ---------- Chips picker (searchable multi-select) ---------- */
+.chips { position: relative; }
+.chips__row {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  min-height: 22px;
+  margin-bottom: 4px;
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: var(--prizm-primary); color: white;
+  padding: 2px 4px 2px 8px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.chip__name { white-space: nowrap; }
+.chip__x {
+  background: transparent; border: none; color: white;
+  cursor: pointer;
+  width: 16px; height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.chip__x:hover { background: rgba(255,255,255,0.25); }
+
+.chips__input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--prizm-border);
+  border-radius: var(--prizm-radius);
+  background: var(--prizm-bg);
+  color: var(--prizm-fg);
+  font: inherit;
+  outline: none;
+}
+.chips__input:focus { border-color: var(--prizm-primary); box-shadow: 0 0 0 2px rgba(11,107,58,0.15); }
+
+.chips__dropdown {
+  position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+  z-index: 50;
+  background: var(--prizm-bg);
+  border: 1px solid var(--prizm-border);
+  border-radius: var(--prizm-radius);
+  max-height: 200px; overflow-y: auto;
+  box-shadow: var(--prizm-shadow);
+}
+.chips__opt {
+  display: block; width: 100%;
+  padding: 6px 10px;
+  background: transparent; border: none; text-align: left;
+  font: inherit; color: var(--prizm-fg);
+  cursor: pointer;
+}
+.chips__opt:hover { background: var(--prizm-row); }
+.chips__empty {
+  padding: 8px 10px; color: var(--prizm-muted); font-size: 12px;
+}
+
 /* ---------- Toasts / banners ---------- */
 .banner {
   padding: 8px 10px;
