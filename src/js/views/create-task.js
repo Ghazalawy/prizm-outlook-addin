@@ -62,9 +62,12 @@ export async function render() {
   let relatedType = '';
   const relatedRecordPicker = asyncSearchPicker({
     placeholder: 'Select "Related to" first',
-    search: async (q) => {
+    initialList: true,        // focus → show active/recent items
+    initialLimit: 10,
+    expandedLimit: 100,
+    search: async (q, opts) => {
       if (!relatedType) return [];
-      return Api.search(relatedType, q);
+      return Api.search(relatedType, q, opts?.limit || 10);
     },
   });
   // Wrap so we can hide the whole row when Related to is empty.
@@ -112,9 +115,41 @@ export async function render() {
   }
   inputs.relatedTo.addEventListener('change', refreshRelatedRow);
 
-  const submitBtn = el('button', { class: 'btn btn--block', type: 'submit' }, 'Create task in Prizm ERP');
-  const cancelBtn = el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => window.__prizmGo('/home') }, 'Cancel');
-  const status = el('div', {});
+  const submitBtn  = el('button', { class: 'btn',         type: 'submit' }, 'Create task in Prizm ERP');
+  const cancelBtn  = el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => window.__prizmGo('/home') }, 'Cancel');
+  const actionRow  = el('div',    { class: 'btn-row btn-row--split' }, cancelBtn, submitBtn);
+  const status     = el('div',    {});
+
+  function fmtWhen(iso) {
+    if (!iso) return new Date().toLocaleString();
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+  }
+
+  function renderSuccess(result) {
+    const id = result?.id;
+    const url = result?.url || (id ? `${Config.get('erpBase')}/admin/tasks/view/${id}` : null);
+    const when = fmtWhen(result?.created_at);
+    const who  = result?.created_by_name || result?.created_by || 'you';
+
+    status.replaceChildren(banner('ok', `Task #${id} created on ${when} by ${who}.`));
+
+    // Replace the action row with the View / Create another 50-50 split.
+    const viewBtn = el('button', {
+      class: 'btn btn--ghost',
+      type: 'button',
+      onclick: () => window.open(url, '_blank', 'noopener'),
+      disabled: !url || undefined,
+    }, 'View task in ERP');
+
+    const againBtn = el('button', {
+      class: 'btn',
+      type: 'button',
+      onclick: () => window.__prizmGo('/create-task'), // re-renders from scratch
+    }, 'Create another');
+
+    actionRow.replaceChildren(viewBtn, againBtn);
+  }
 
   const form = el('form', {
     onsubmit: async (e) => {
@@ -150,18 +185,7 @@ export async function render() {
 
       try {
         const result = await Api.createTask(payload);
-        const taskUrl = result?.url || (result?.id ? `${Config.get('erpBase')}/admin/tasks/view/${result.id}` : null);
-        const msg = taskUrl
-          ? `Task #${result.id} created. Open: ${taskUrl}`
-          : 'Task created in Prizm ERP.';
-        status.replaceChildren(banner('ok', msg));
-        if (taskUrl) {
-          status.appendChild(el('div', { style: { marginTop: '6px' } },
-            el('a', { href: taskUrl, target: '_blank', rel: 'noopener', text: 'Open task in ERP' }),
-          ));
-        }
-        submitBtn.textContent = 'Create another';
-        submitBtn.disabled = false;
+        renderSuccess(result);
       } catch (err) {
         const msg = err instanceof ApiError
           ? `Failed (${err.status || 'net'}): ${err.message}`
@@ -206,7 +230,7 @@ export async function render() {
       inputs.attachFiles, el('label', { text: `Attach ${snap.attachments?.length || 0} email attachment(s)` }),
     ),
 
-    el('div', { class: 'btn-row' }, cancelBtn, submitBtn),
+    actionRow,
     status,
   );
 

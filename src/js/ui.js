@@ -102,7 +102,9 @@ export function chipsPicker({ options = [], selected = [], placeholder = 'Search
     picked.set(id, name);
     input.value = '';
     renderChips();
-    renderDropdown('');
+    // Collapse on selection — re-open by clicking the field again.
+    dropdown.hidden = true;
+    input.blur();
   }
 
   function renderDropdown(q) {
@@ -158,16 +160,21 @@ export function chipsPicker({ options = [], selected = [], placeholder = 'Search
 
 /**
  * Single-select async search picker.
- * Type → debounced async call → dropdown of results → click sets the chosen
- * record (and fills the input with its label). Re-typing clears the choice.
  *
- * @param {object} opts
- * @param {(q: string) => Promise<Array<{id:any,label:string,sub?:string}>>} opts.search
- * @param {string} [opts.placeholder='Search...']
- * @param {(r: object) => void} [opts.onChange]
- * @returns {{node: HTMLElement, get: () => object|null, clear: () => void, setPlaceholder: (s:string)=>void}}
+ * - Focus with empty input → loads a short initial list (active/recent items).
+ * - Type → debounced async call, dropdown of results.
+ * - Click a result → fills the input, captures the record, dropdown closes.
+ * - When the result list looks truncated, a "Show all" footer fetches more.
+ *
+ * Signature of search:
+ *   (q: string, opts: {limit?: number}) => Promise<Array<{id, label, sub?}>>
+ *
+ * @returns {{node, get, clear, setPlaceholder}}
  */
-export function asyncSearchPicker({ search, placeholder = 'Search...', onChange } = {}) {
+export function asyncSearchPicker({
+  search, placeholder = 'Search...', onChange,
+  initialList = false, initialLimit = 10, expandedLimit = 100,
+} = {}) {
   const input    = el('input', { type: 'search', placeholder, class: 'chips__input' });
   const dropdown = el('div',   { class: 'chips__dropdown', hidden: true });
   const wrap     = el('div',   { class: 'chips' }, input, dropdown);
@@ -181,55 +188,82 @@ export function asyncSearchPicker({ search, placeholder = 'Search...', onChange 
     if (typeof onChange === 'function') onChange(chosen);
   }
 
-  function showResults(items) {
+  function showResults(items, { truncated = false, currentQuery = '' } = {}) {
     dropdown.replaceChildren();
     if (!items?.length) {
-      dropdown.appendChild(el('div', { class: 'chips__empty', text: 'No matches.' }));
+      dropdown.appendChild(el('div', { class: 'chips__empty', text: currentQuery ? 'No matches.' : 'Nothing yet.' }));
       return;
     }
     items.forEach((r) => {
-      const row = el('button', {
+      dropdown.appendChild(el('button', {
         type: 'button', class: 'chips__opt',
         onmousedown: (e) => {
           e.preventDefault();
           publish(r);
           input.value = r.label;
           dropdown.hidden = true;
+          input.blur();
         },
       },
         el('div', { class: 'chips__opt-title', text: r.label }),
         r.sub ? el('div', { class: 'chips__opt-sub', text: r.sub }) : null,
-      );
-      dropdown.appendChild(row);
+      ));
     });
+    if (truncated) {
+      dropdown.appendChild(el('button', {
+        type: 'button', class: 'chips__opt chips__opt--showall',
+        onmousedown: async (e) => {
+          e.preventDefault();
+          await runQuery(currentQuery, expandedLimit, /*expanded=*/true);
+        },
+      }, '+ Show all'));
+    }
+  }
+
+  async function runQuery(q, limit, expanded = false) {
+    const myReq = ++reqId;
+    dropdown.hidden = false;
+    dropdown.replaceChildren(el('div', { class: 'chips__empty', text: 'Loading…' }));
+    try {
+      const results = await search(q, { limit });
+      if (myReq !== reqId) return; // stale
+      const truncated = !expanded && Array.isArray(results) && results.length >= limit;
+      showResults(results || [], { truncated, currentQuery: q });
+    } catch (e) {
+      if (myReq !== reqId) return;
+      dropdown.replaceChildren(el('div', { class: 'chips__empty', text: 'Error: ' + (e.message || e) }));
+    }
   }
 
   input.addEventListener('input', () => {
     publish(null);
     clearTimeout(debounceTimer);
     const q = input.value.trim();
-    if (!q) { dropdown.hidden = true; return; }
-    const myReq = ++reqId;
-    debounceTimer = setTimeout(async () => {
-      dropdown.hidden = false;
-      dropdown.replaceChildren(el('div', { class: 'chips__empty', text: 'Searching…' }));
-      try {
-        const results = await search(q);
-        if (myReq !== reqId) return; // stale response from earlier keystroke
-        showResults(results);
-      } catch (e) {
-        if (myReq !== reqId) return;
-        dropdown.replaceChildren(el('div', { class: 'chips__empty', text: 'Error: ' + e.message }));
+    if (!q) {
+      if (initialList) {
+        debounceTimer = setTimeout(() => runQuery('', initialLimit), 100);
+      } else {
+        dropdown.hidden = true;
       }
-    }, 250);
+      return;
+    }
+    debounceTimer = setTimeout(() => runQuery(q, initialLimit), 250);
   });
-  input.addEventListener('focus', () => { if (input.value.trim()) dropdown.hidden = false; });
-  input.addEventListener('blur',  () => { setTimeout(() => { dropdown.hidden = true; }, 150); });
+
+  input.addEventListener('focus', () => {
+    if (input.value.trim()) {
+      dropdown.hidden = false;
+      return;
+    }
+    if (initialList) runQuery('', initialLimit);
+  });
+
+  input.addEventListener('blur', () => { setTimeout(() => { dropdown.hidden = true; }, 150); });
 
   return {
     node: wrap,
     get: () => chosen,
-    clear: () => { publish(null); input.value = ''; dropdown.hidden = true; },
+    clear: () => { publish(null); input.value = ''; dropdown.hidden = true; reqId++; },
     setPlaceholder: (s) => { input.placeholder = s; },
   };
 }

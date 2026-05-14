@@ -148,12 +148,12 @@ html, body {
 .ctx__value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- Forms ---------- */
-.field { margin-bottom: 10px; }
-.field__row { display: flex; gap: 8px; }
+.field { margin-bottom: 12px; }
+.field__row { display: flex; gap: 10px; align-items: flex-start; }
 .field__row > .field { flex: 1; margin-bottom: 0; }
 .field label {
   display: block; font-size: 11.5px; font-weight: 600;
-  margin-bottom: 4px; color: var(--prizm-fg);
+  margin-bottom: 5px; color: var(--prizm-fg);
 }
 .field .required { color: var(--prizm-danger); margin-left: 2px; }
 .field input[type="text"],
@@ -201,15 +201,17 @@ html, body {
 }
 .btn--ghost:hover { background: var(--prizm-row); border-color: var(--prizm-muted); }
 .btn--block { width: 100%; justify-content: center; }
-.btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.btn-row { display: flex; gap: 10px; margin-top: 14px; }
+.btn-row > .btn { flex: 1; justify-content: center; }
+.btn-row--split > .btn { flex: 1 1 50%; }
 
 /* ---------- Chips picker (searchable multi-select) ---------- */
 .chips { position: relative; }
 .chips__row {
   display: flex; flex-wrap: wrap; gap: 4px;
-  min-height: 22px;
   margin-bottom: 4px;
 }
+.chips__row:empty { display: none; }  /* no empty placeholder gap when nothing picked */
 .chip {
   display: inline-flex; align-items: center; gap: 2px;
   background: var(--prizm-primary); color: white;
@@ -260,7 +262,14 @@ html, body {
   cursor: pointer;
 }
 .chips__opt:hover { background: var(--prizm-row); }
-.chips__opt--create { color: var(--prizm-primary); font-weight: 500; }
+.chips__opt--create  { color: var(--prizm-primary); font-weight: 500; }
+.chips__opt--showall {
+  color: var(--prizm-primary);
+  font-weight: 500;
+  border-top: 1px solid var(--prizm-border);
+  text-align: center;
+  background: var(--prizm-row);
+}
 .chips__opt-title { font-size: 12.5px; line-height: 1.3; }
 .chips__opt-sub   { font-size: 11px; color: var(--prizm-muted); margin-top: 1px; }
 .chips__empty {

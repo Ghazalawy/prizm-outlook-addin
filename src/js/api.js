@@ -65,7 +65,7 @@ async function request(path, { method = 'GET', body, query, signal } = {}) {
 export const Api = {
   ping()                        { return request('/ping'); },
   refdata()                     { return request('/refdata'); },
-  search(type, q)               { return request('/search', { query: { type, q } }); },
+  search(type, q, limit)        { return request('/search', { query: { type, q, limit } }); },
   lookupContact(email)          { return request('/lookup', { query: { email } }); },
   createTask(payload)           { return request('/tasks',         { method: 'POST', body: payload }); },
   createOpportunity(payload)    { return request('/opportunities', { method: 'POST', body: payload }); },

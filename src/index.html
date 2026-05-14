@@ -123,8 +123,19 @@
   <div class="changelog">
 
     <div class="entry">
-      <h4>Searchable related-record + reliable reload</h4>
+      <h4>Picker polish, success UX, related-record initial list</h4>
       <div class="meta" id="latestBuildTag">build —</div>
+      <ul>
+        <li>Assignees / Tags / Related-record pickers collapse the dropdown after selection — click the field again to re-open.</li>
+        <li>Related-record picker now shows an initial list of <em>active / recent</em> items the moment you click in (10 by default, "Show all" for the next 100). Backend filters projects to non-cancelled, customers to active, leads to most recent, etc.</li>
+        <li>After a task is created: success banner is now just <em>"Task #X created on DATE by USER"</em>. The submit row is replaced with two equal buttons: <em>View task in ERP</em> and <em>Create another</em>.</li>
+        <li>Form spacing / field alignment cleaned up; empty chips row no longer leaves a gap.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>Searchable related-record + reliable reload</h4>
+      <div class="meta">build 2b4d5d4</div>
       <ul>
         <li>"Related to" → reveals a searchable picker that queries the ERP live (no more free-text guessing).</li>
         <li>Reload button (↻) properly busts Outlook's iframe cache so post-deploy refreshes actually pick up the new build.</li>
