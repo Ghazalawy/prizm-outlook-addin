@@ -45,6 +45,15 @@ html, body {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   height: 100%; gap: 10px;
 }
+
+/* The [hidden] attribute would normally apply display:none, but the class
+   rules above override it on specificity. These explicit selectors restore
+   the standard behaviour so JS toggling `el.hidden = true` actually hides
+   the element instead of leaving a 100%-tall ghost in the layout. */
+.splash[hidden],
+.topbar[hidden],
+.view[hidden],
+.footer[hidden] { display: none !important; }
 .splash__logo { width: 64px; height: 64px; object-fit: contain; }
 .splash__title { font-size: 14px; color: var(--prizm-muted); }
 .splash__spinner {
