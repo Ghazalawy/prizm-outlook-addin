@@ -13,7 +13,20 @@ import { Api, ApiError } from '../api.js';
 import { Config } from '../config.js';
 import { el, mount, field, row, banner, contextBanner } from '../ui.js';
 
+function gotoSettings() { window.__prizmGo('/settings'); }
+
 export async function render() {
+  // Pre-flight: API key required for any create flow.
+  if (!Config.get('apiKey')) {
+    mount(el('div', {},
+      banner('err', 'No API key set. Open Settings to paste your key from Prizm ERP.'),
+      el('div', { class: 'btn-row' },
+        el('button', { class: 'btn', type: 'button', onclick: gotoSettings }, 'Open Settings'),
+      ),
+    ));
+    return;
+  }
+
   // Loading state
   mount(el('div', {}, banner('info', 'Loading email context...')));
 
@@ -103,6 +116,11 @@ export async function render() {
           ? `Failed (${err.status || 'net'}): ${err.message}`
           : `Failed: ${err.message}`;
         status.replaceChildren(banner('err', msg));
+        if (err instanceof ApiError && err.status === 401) {
+          status.appendChild(el('div', { class: 'btn-row' },
+            el('button', { class: 'btn btn--ghost', type: 'button', onclick: gotoSettings }, 'Fix API key in Settings'),
+          ));
+        }
         submitBtn.disabled = false;
         submitBtn.textContent = 'Retry';
       }

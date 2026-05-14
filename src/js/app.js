@@ -44,6 +44,7 @@ async function main() {
   await Office.ready();
   setupChrome();
   registerRoutes();
+  // Router handles the no-key redirect to /settings.
   startRouter();
 }
 

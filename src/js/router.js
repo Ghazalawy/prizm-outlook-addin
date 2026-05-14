@@ -27,6 +27,20 @@ export function back() {
 
 async function render() {
   const path = (window.location.hash || '#/home').replace(/^#/, '') || '/home';
+
+  // Global gate: every route except /settings requires an API key.
+  // First-launch lands users on /settings with a banner; if a user clears
+  // their key mid-session and tries to do anything else, they'll bounce
+  // back here too.
+  const noKey = !(localStorage.getItem('prizm.apiKey'));
+  if (noKey && path !== '/settings') {
+    window.__prizmFirstRun = true;
+    if (window.location.hash !== '#/settings') {
+      window.location.hash = '/settings';
+      return; // hashchange will trigger render() again
+    }
+  }
+
   let route = routes.get(path);
   if (!route) {
     console.warn(`No route for ${path}, falling back to /home`);

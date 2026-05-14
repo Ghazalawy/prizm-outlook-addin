@@ -14,7 +14,7 @@ export async function render() {
     Config.set('erpBase', inputs.erpBase.value.trim());
     Config.set('apiBase', inputs.apiBase.value.trim());
     Config.set('apiKey',  inputs.apiKey.value);
-    status.replaceChildren(banner('ok', 'Saved.'));
+    status.replaceChildren(banner('ok', 'Saved. Click Test connection to verify, then use the back arrow.'));
   }}, 'Save');
 
   const test = el('button', { class: 'btn btn--ghost', type: 'button', onclick: async () => {
@@ -34,14 +34,21 @@ export async function render() {
     window.location.reload();
   }}, 'Reset');
 
+  const firstRun = !!window.__prizmFirstRun;
+  window.__prizmFirstRun = false;
+
   mount(el('div', {},
-    el('div', { class: 'card' },
-      el('h3', { text: 'ERP connection' }),
-      el('p', { text: 'These are stored locally per browser/Outlook profile.' }),
-    ),
-    field('ERP base URL', inputs.erpBase, { hint: 'Used for "Open in ERP" links, e.g. https://ms.prizm-energy.com' }),
-    field('API base URL', inputs.apiBase, { hint: 'API endpoint for this add-in, e.g. https://ms.prizm-energy.com/api' }),
-    field('API key',      inputs.apiKey,  { hint: 'Personal token from ERP > Profile > API keys.' }),
+    firstRun
+      ? banner('info',
+          'First-time setup — paste your personal API key from Prizm ERP, save, then test the connection. '
+          + 'Open the keys page in ERP: https://ms.prizm-energy.com/MS/admin/outlookapi/keys')
+      : el('div', { class: 'card' },
+          el('h3', { text: 'ERP connection' }),
+          el('p', { text: 'These are stored locally per browser/Outlook profile.' }),
+        ),
+    field('ERP base URL', inputs.erpBase, { hint: 'Used for "Open in ERP" links, e.g. https://ms.prizm-energy.com/MS' }),
+    field('API base URL', inputs.apiBase, { hint: 'Bridge endpoint, e.g. https://ms.prizm-energy.com/MS/outlookapi/bridge' }),
+    field('API key',      inputs.apiKey,  { hint: 'Generate at ERP → Outlook → Add-in API keys. Shown once.' }),
     el('div', { class: 'btn-row' }, save, test, clear),
     status,
   ));
