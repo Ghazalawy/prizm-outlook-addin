@@ -32,14 +32,37 @@ jobs:
           cp -R src/. dist/
           cp manifest.xml dist/manifest.xml
           touch dist/.nojekyll
-          VERSION="$(git rev-parse --short HEAD)-$(date -u +%Y%m%d%H%M%S)"
-          echo "Stamping version $VERSION"
-          # Cache-bust: replace DEPLOY_VERSION placeholders so Outlook re-fetches assets on every deploy
+          SHA="$(git rev-parse --short HEAD)"
+          TS="$(date -u +%Y%m%d%H%M%S)"
+          BUILD="$(git rev-list --count HEAD)"
+          VERSION="${SHA}-${TS}"
+          MANIFEST_VERSION="2.0.${BUILD}.0"   # OfficeApp <Version> must be N.N.N.N
+          ISO_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Stamping VERSION=$VERSION  MANIFEST=$MANIFEST_VERSION"
+
+          # Cache-bust placeholders in served files (HTML/JS/CSS)
           find dist -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -print0 \
             | xargs -0 sed -i "s/DEPLOY_VERSION/$VERSION/g"
-          # Stamp version into the JS config as the actual displayed app version
-          sed -i "s/version: '2.0.0'/version: '$VERSION'/" dist/js/config.js || true
+
+          # Stamp the OfficeApp <Version> in the deployed manifest so the user
+          # can verify in 'My add-ins' (Outlook) AND on the install page that
+          # they downloaded the latest build. Source manifest keeps 2.0.0.0.
+          sed -i "s|<Version>2.0.0.0</Version>|<Version>${MANIFEST_VERSION}</Version>|" dist/manifest.xml
+
+          # Stamp app version + build info into JS config
+          sed -i "s/version: '2.0.0'/version: '$MANIFEST_VERSION'/" dist/js/config.js || true
+
+          # Plain VERSION file (legacy) + richer release-info.json for the install page
           echo "$VERSION" > dist/VERSION
+          cat > dist/release-info.json <<EOF
+          {
+            "manifestVersion": "${MANIFEST_VERSION}",
+            "buildId": "${VERSION}",
+            "commit": "${SHA}",
+            "deployedAt": "${ISO_TIME}",
+            "manifestUrl": "https://ghazalawy.github.io/prizm-outlook-addin/manifest.xml"
+          }
+          EOF
           ls -la dist
 
       - name: Upload Pages artifact

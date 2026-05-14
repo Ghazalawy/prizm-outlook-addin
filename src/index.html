@@ -7,12 +7,13 @@
   <title>Install — Prizm Energy ERP add-in</title>
   <link rel="stylesheet" href="styles/taskpane.css?v=DEPLOY_VERSION" />
   <style>
-    body { max-width: 720px; margin: 0 auto; padding: 24px 20px 60px; font-size: 14px; }
+    body { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; font-size: 14px; }
     h1, h2 { margin: 0 0 8px; }
     h1 { font-size: 22px; }
-    h2 { font-size: 16px; margin-top: 24px; }
-    ol { padding-left: 20px; }
-    ol li { margin: 8px 0; line-height: 1.55; }
+    h2 { font-size: 16px; margin-top: 28px; }
+    h3 { font-size: 14px; margin: 14px 0 4px; }
+    ol, ul { padding-left: 20px; }
+    ol li, ul li { margin: 6px 0; line-height: 1.55; }
     .download-row {
       display: flex; align-items: center; gap: 12px;
       padding: 16px; margin: 16px 0;
@@ -22,21 +23,44 @@
     .download-row img { width: 56px; height: 56px; }
     .download-row .meta { flex: 1; }
     .download-row .meta .title { font-weight: 600; }
-    .download-row .meta .sub   { color: var(--prizm-muted); font-size: 12px; margin-top: 2px; }
+    .download-row .meta .sub   { color: var(--prizm-muted); font-size: 12px; margin-top: 2px; font-family: var(--prizm-mono); }
     code { background: var(--prizm-row); padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
     .changed-note {
       background: #fff8e7; border: 1px solid #f3d785; color: #6c4a00;
       padding: 10px 12px; border-radius: var(--prizm-radius); font-size: 12.5px;
       margin: 12px 0;
     }
+    .pin-call {
+      background: #e8f3fb; border: 1px solid #b9d4f3; color: #0b4d8c;
+      padding: 12px 14px; border-radius: var(--prizm-radius);
+      font-size: 13px; margin: 14px 0;
+    }
+    .pin-call strong { display: block; margin-bottom: 4px; }
+    .changelog {
+      background: var(--prizm-row); border: 1px solid var(--prizm-border);
+      border-radius: var(--prizm-radius); padding: 12px 16px; margin: 10px 0;
+    }
+    .changelog .entry { margin: 6px 0 14px; }
+    .changelog .entry:last-child { margin-bottom: 4px; }
+    .changelog .entry h4 { margin: 4px 0 4px; font-size: 13px; }
+    .changelog .entry .meta { font-family: var(--prizm-mono); font-size: 11px; color: var(--prizm-muted); }
+    .changelog .entry ul { margin: 4px 0 0; font-size: 13px; }
+    .ver-tag {
+      display: inline-block;
+      background: var(--prizm-primary); color: white;
+      font-family: var(--prizm-mono);
+      font-size: 11px; padding: 1px 6px;
+      border-radius: 4px; margin-left: 6px;
+    }
     @media (prefers-color-scheme: dark) {
       .changed-note { background: #2b220c; color: #f5d27b; border-color: #614a14; }
+      .pin-call     { background: #0c1f2e; color: #b6d4f4; border-color: #244a73; }
     }
   </style>
 </head>
 <body class="ms-Fabric">
 
-  <h1>Prizm Energy ERP — Outlook add-in</h1>
+  <h1>Prizm Energy ERP — Outlook add-in <span id="verTag" class="ver-tag">loading…</span></h1>
   <p style="color: var(--prizm-muted)">
     One menu in every email, hooked into your Perfex ERP. Create tasks,
     opportunities, leads, tickets, link emails to records — without leaving Outlook.
@@ -52,35 +76,135 @@
     <img src="assets/icon-64.png" alt="" />
     <div class="meta">
       <div class="title">Step 1 — Download the manifest</div>
-      <div class="sub">A single XML file. Save it anywhere; you'll point Outlook at it once.</div>
+      <div class="sub" id="dlMeta">Latest: loading…</div>
     </div>
     <a class="btn" href="manifest.xml" download="prizm-outlook-addin-manifest.xml">Download</a>
   </div>
 
   <h2>Step 2 — Add to Outlook</h2>
   <ol>
-    <li><strong>Outlook on the web:</strong> Click <em>Get add-ins</em> (the puzzle-piece icon) → <em>My add-ins</em> → <em>Add a custom add-in</em> → <em>Add from File...</em> → pick the manifest you just downloaded.</li>
-    <li><strong>Outlook desktop (Windows/Mac):</strong> <em>File → Get Add-ins → My add-ins → Add a custom add-in → Add from File...</em></li>
-    <li>Confirm any "this add-in could access info" prompt → done.</li>
+    <li><strong>Outlook on the web:</strong> Click <em>Get add-ins</em> (the puzzle-piece icon) → <em>My add-ins</em> → <em>Add a custom add-in</em> → <em>Add from File…</em> → pick the manifest you just downloaded.</li>
+    <li><strong>Outlook desktop (Windows/Mac):</strong> <em>File → Get Add-ins → My add-ins → Add a custom add-in → Add from File…</em></li>
+    <li>Confirm the consent prompt → done.</li>
   </ol>
+  <p class="meta" style="color: var(--prizm-muted); font-size: 12px; margin-top: 6px;">
+    The version shown next to <em>Prizm Energy ERP</em> in <em>My add-ins</em> after install should match
+    <code id="manifestVerInline">…</code> above. If it doesn't, you uploaded an older copy — clear it
+    and re-download.
+  </p>
 
   <h2>Step 3 — Get your API key</h2>
   <ol>
     <li>Sign in to Prizm ERP → sidebar <em>Outlook → Add-in API keys</em>
         (<a href="https://ms.prizm-energy.com/MS/admin/outlookapi/keys" target="_blank" rel="noopener">production</a>).</li>
     <li>Click <em>Generate new key</em> → copy the token shown (it's revealed once).</li>
-    <li>In Outlook, open any email → <em>Prizm ERP → Open Prizm ERP → Settings</em> → paste the key → <em>Test connection</em>.</li>
+    <li>In Outlook, open any email → <em>Prizm ERP</em> in the top ribbon (or the email's "…" menu after Step 4) → <em>Open Prizm ERP → Settings</em> → paste the key → <em>Test connection</em>.</li>
   </ol>
 
-  <h2>That's it</h2>
-  <p>From here on, any email shows a <strong>Prizm ERP</strong> action in its action menu with sub-items for every supported record type. New ERP actions appear automatically when we ship them — no re-install needed.</p>
+  <h2>Step 4 — Pin the icon to the email toolbar <span style="color: var(--prizm-muted); font-weight: normal; font-size: 13px;">(strongly recommended)</span></h2>
 
-  <h2>Trouble?</h2>
+  <div class="pin-call">
+    <strong>Why?</strong>
+    Custom-sideloaded add-ins like ours start in the Outlook <strong>top ribbon</strong> only.
+    Curated partner add-ins (Asana, ClickUp, Teams, OneNote) get pinned to the email's
+    toolbar by Microsoft default; sideloaded ones don't. <strong>One-time pin = same UX as Asana.</strong>
+  </div>
+
+  <ol>
+    <li>Open any email.</li>
+    <li>Click the <strong>…</strong> in the email toolbar (same row as Reply / Reply all / Forward, far right).</li>
+    <li>Scroll to the bottom of the menu → click <strong>Customize actions</strong>.</li>
+    <li>In the panel that opens, scroll to the <strong>Add-ins</strong> section → tick the box next to <strong>Prizm Energy ERP</strong>.</li>
+    <li>Click <strong>Save</strong> at the bottom.</li>
+  </ol>
+  <p>Reopen any email — the purple <strong>P</strong> icon now sits next to Asana / ClickUp on the email toolbar, and the <strong>Prizm ERP</strong> menu is in the "…" dropdown.</p>
+
+  <h2>What's new</h2>
+  <div class="changelog">
+
+    <div class="entry">
+      <h4>Searchable related-record + reliable reload</h4>
+      <div class="meta" id="latestBuildTag">build —</div>
+      <ul>
+        <li>"Related to" → reveals a searchable picker that queries the ERP live (no more free-text guessing).</li>
+        <li>Reload button (↻) properly busts Outlook's iframe cache so post-deploy refreshes actually pick up the new build.</li>
+        <li>Task creation now correctly sets <code>tbltasks.rel_type</code> + <code>tbltasks.rel_id</code> so tasks link to the chosen project/customer/lead/etc.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>Chip-style Assignees + Tags, priority bug fix</h4>
+      <div class="meta">build d045ff0</div>
+      <ul>
+        <li>Assignees: searchable input, click to add as chip, × to remove (was a basic listbox).</li>
+        <li>Tags: same picker, plus <em>+ Create "x"</em> option for free-form tag values.</li>
+        <li>Priority dropdown stopped showing <code>[object Object]</code> (refdata returns <code>{id,name,color}</code> objects).</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>Splash + back arrow + icon-128 fixes</h4>
+      <div class="meta">build 92c320b / e0a8d5d</div>
+      <ul>
+        <li>Splash spinner properly hides after Office.js initializes (was leaving a 100vh ghost above the form).</li>
+        <li>Back arrow always navigates to /home; hides itself on /home where there's nowhere to go back to.</li>
+        <li><code>icon-128.png</code> regenerated at proper 128×128 (was 96×96 — a possible cause of Outlook silently dropping the command).</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>UX gate + install landing</h4>
+      <div class="meta">build 2102785 / e93e184</div>
+      <ul>
+        <li>First-launch users with no API key are forced to Settings; every other route is gated until a key is saved.</li>
+        <li>This install page exists with a one-click manifest download — required since Microsoft disabled "Add from URL" in early 2026.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>Initial v2 release</h4>
+      <div class="meta">build initial</div>
+      <ul>
+        <li>Single Menu control with submenu of 7 ERP actions (Create Task / Opportunity / Lead / Ticket / Link to Record / Lookup Sender / Open Home).</li>
+        <li>Backed by new <code>outlookapi/Bridge</code> controller in Perfex with per-staff bearer keys and MS Graph attachment fetching.</li>
+        <li>Auto-deployed via GitHub Pages on every push to main; ERP side via SSH pull on Hetzner.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <h2>Troubleshooting</h2>
   <ul>
-    <li>If <em>Test connection</em> returns a red banner: confirm the API base URL in Settings is <code>https://ms.prizm-energy.com/MS/outlookapi/bridge</code> (or <code>https://dev.prizm-energy.com/outlookapi/bridge</code> for the dev environment).</li>
-    <li>If the menu doesn't appear after sideload: reopen the email (or restart Outlook), then check <em>My add-ins</em> shows <em>Prizm Energy ERP</em> as installed.</li>
+    <li>If <em>Test connection</em> returns a red banner: confirm the API base URL in Settings is <code>https://ms.prizm-energy.com/MS/outlookapi/bridge</code> (or <code>https://dev.prizm-energy.com/outlookapi/bridge</code> for dev).</li>
+    <li>If you see the old UI after deploy: in the task pane top-right, click <strong>↻</strong> (it bypasses Outlook's iframe cache). Hard refresh Outlook itself (<code>Ctrl+F5</code>) as a last resort.</li>
+    <li>If the Prizm ERP icon isn't showing in the email toolbar (next to Reply/Forward): do Step 4 above. Custom sideloaded add-ins always need this pin.</li>
     <li>Source &amp; issues: <a href="https://github.com/Ghazalawy/prizm-outlook-addin" target="_blank" rel="noopener">github.com/Ghazalawy/prizm-outlook-addin</a></li>
   </ul>
 
+  <script>
+    (function () {
+      fetch('release-info.json', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((info) => {
+          const vt = document.getElementById('verTag');
+          const dl = document.getElementById('dlMeta');
+          const inline = document.getElementById('manifestVerInline');
+          const latest = document.getElementById('latestBuildTag');
+          if (vt) vt.textContent = 'v' + info.manifestVersion;
+          if (inline) inline.textContent = info.manifestVersion;
+          if (dl) {
+            const when = info.deployedAt ? new Date(info.deployedAt).toUTCString() : '';
+            dl.textContent =
+              'manifest v' + info.manifestVersion +
+              '  •  build ' + info.buildId +
+              (when ? '  •  deployed ' + when : '');
+          }
+          if (latest) latest.textContent = 'build ' + info.buildId;
+        })
+        .catch(() => {
+          const vt = document.getElementById('verTag'); if (vt) vt.textContent = 'v?';
+        });
+    })();
+  </script>
 </body>
 </html>
