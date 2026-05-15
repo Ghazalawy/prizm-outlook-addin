@@ -30,8 +30,10 @@ async function render() {
   // Global gate: every route except /settings requires an API key.
   // First-launch lands users on /settings with a banner; if a user clears
   // their key mid-session and tries to do anything else, they'll bounce
-  // back here too.
-  const noKey = !(localStorage.getItem('prizm.apiKey'));
+  // back here too. Read via Config so roamingSettings (the authoritative
+  // store inside Outlook) is consulted before the localStorage fallback.
+  const { Config } = await import('./config.js');
+  const noKey = !Config.get('apiKey');
   if (noKey && path !== '/settings') {
     window.__prizmFirstRun = true;
     if (window.location.hash !== '#/settings') {

@@ -10,11 +10,25 @@ export async function render() {
   };
   const status = el('div', {});
 
-  const save = el('button', { class: 'btn', type: 'button', onclick: () => {
-    Config.set('erpBase', inputs.erpBase.value.trim());
-    Config.set('apiBase', inputs.apiBase.value.trim());
-    Config.set('apiKey',  inputs.apiKey.value);
-    status.replaceChildren(banner('ok', 'Saved. Click Test connection to verify, then use the back arrow.'));
+  const save = el('button', { class: 'btn', type: 'button', onclick: async () => {
+    save.disabled = true; save.textContent = 'Saving…';
+    status.replaceChildren(banner('info', 'Saving…'));
+    const r = await Config.save({
+      erpBase: inputs.erpBase.value.trim(),
+      apiBase: inputs.apiBase.value.trim(),
+      apiKey:  inputs.apiKey.value,
+    });
+    save.disabled = false; save.textContent = 'Save';
+    if (r?.status === 'succeeded' || r?.status === 'no-roaming') {
+      const where = Config.isRoaming()
+        ? 'saved to your Outlook profile (syncs across devices)'
+        : 'saved locally in this browser';
+      status.replaceChildren(banner('ok', `Settings ${where}. Test the connection next.`));
+    } else {
+      status.replaceChildren(banner('err',
+        'Saved locally, but could not persist to Outlook roaming settings'
+        + (r?.error ? `: ${r.error}` : '. The key may be lost when Outlook restarts.')));
+    }
   }}, 'Save');
 
   const test = el('button', { class: 'btn btn--ghost', type: 'button', onclick: async () => {
@@ -27,15 +41,17 @@ export async function render() {
     }
   }}, 'Test connection');
 
-  const clear = el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => {
-    Config.set('erpBase', null);
-    Config.set('apiBase', null);
-    Config.set('apiKey',  null);
+  const clear = el('button', { class: 'btn btn--ghost', type: 'button', onclick: async () => {
+    await Config.save({ erpBase: null, apiBase: null, apiKey: null });
     window.location.reload();
   }}, 'Reset');
 
   const firstRun = !!window.__prizmFirstRun;
   window.__prizmFirstRun = false;
+
+  const storageNote = Config.isRoaming()
+    ? 'Stored in your Outlook profile (Exchange roamingSettings) — persists across devices and re-installs.'
+    : 'Stored in this browser only (no Outlook context detected).';
 
   mount(el('div', {},
     firstRun
@@ -44,7 +60,7 @@ export async function render() {
           + 'Open the keys page in ERP: https://ms.prizm-energy.com/MS/admin/outlookapi/keys')
       : el('div', { class: 'card' },
           el('h3', { text: 'ERP connection' }),
-          el('p', { text: 'These are stored locally per browser/Outlook profile.' }),
+          el('p', { text: storageNote }),
         ),
     field('ERP base URL', inputs.erpBase, { hint: 'Used for "Open in ERP" links, e.g. https://ms.prizm-energy.com/MS' }),
     field('API base URL', inputs.apiBase, { hint: 'Bridge endpoint, e.g. https://ms.prizm-energy.com/MS/outlookapi/bridge' }),

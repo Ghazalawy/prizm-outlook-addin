@@ -46,6 +46,11 @@ function registerRoutes() {
 
 async function main() {
   await Office.ready();
+  // Hook roamingSettings before any view reads Config — localStorage in the
+  // Outlook iframe is third-party-partitioned and frequently cleared, which
+  // is why the API key wasn't persisting across sessions. roamingSettings
+  // lives on Exchange and survives.
+  Config.attachRoaming();
   setupChrome();
   registerRoutes();
   // Router handles the no-key redirect to /settings.
