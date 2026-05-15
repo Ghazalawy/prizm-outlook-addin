@@ -72,6 +72,8 @@ export const Api = {
   createOpportunity(payload)    { return request('/opportunities', { method: 'POST', body: payload }); },
   createLead(payload)           { return request('/leads',         { method: 'POST', body: payload }); },
   createTicket(payload)         { return request('/tickets',       { method: 'POST', body: payload }); },
+  createCustomer(payload)       { return request('/customers',     { method: 'POST', body: payload }); },
+  createContact(payload)        { return request('/contacts',      { method: 'POST', body: payload }); },
   linkEmail(payload)            { return request('/link',          { method: 'POST', body: payload }); },
 };
 

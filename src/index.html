@@ -123,8 +123,20 @@
   <div class="changelog">
 
     <div class="entry">
-      <h4>Forward to assignees, attachments-on-by-default, menu reorder, Home activity list</h4>
+      <h4>Lookup Sender = full domain intel · Add company / Add contact · official icon</h4>
       <div class="meta" id="latestBuildTag">build —</div>
+      <ul>
+        <li><strong>Lookup Sender</strong> rewrite: shows domain registration status (customer / partner / vendor with pills), relationship summary (count of invoices / opportunities / projects / tickets / estimates / contracts), the contact-on-file if any, and recent activity rows.</li>
+        <li>New <strong>Add Company</strong> and <strong>Add Contact</strong> buttons. Strict rule enforced: <em>"Add contact" is disabled until a customer matching the email's domain is registered</em>. Backend (POST <code>/contacts</code>) also rejects orphan contacts at the API level.</li>
+        <li>Add-contact form pre-fills from the email <strong>signature</strong> using a regex heuristic — name (capitalized line near a sign-off), title (line below name), phone (digit clusters), mobile (lines labeled <em>mobile/cell</em>). No AI.</li>
+        <li>Add-company form takes a website → domain becomes the unique identifier; mark-as-customer / mark-as-supplier flags written into <code>tblprzbusiness_partners</code>.</li>
+        <li>Add-in <strong>icon</strong> updated to the official Prizm Outlook add-in art (regenerated at 16/32/64/80/128 from the source 256×256).</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>Forward to assignees, attachments-on-by-default, menu reorder, Home activity list</h4>
+      <div class="meta">build 616fbf8</div>
       <ul>
         <li>"Forward to sender as a reply" → renamed to <em>"Email the assignees"</em>. Uses <code>displayNewMessageForm</code> with assignee emails as <strong>To:</strong> (sender CC'd for context), pre-filled with your description + hyperlinked <em>"Follow up task has been created #N"</em> and your signature.</li>
         <li>Both attachment checkboxes (<em>email as .eml</em>, <em>files</em>) now default to checked.</li>

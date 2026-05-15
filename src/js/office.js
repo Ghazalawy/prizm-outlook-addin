@@ -28,6 +28,68 @@ export const Office = {
     };
   },
 
+  /**
+   * Best-effort signature parser. No AI — pure regex / heuristics.
+   * Given the email body text, tries to extract:
+   *   - name        (capitalized words near a "regards"/"sincerely" closing)
+   *   - title       (the line immediately after the name, before the company)
+   *   - phones      (international or local digit clusters)
+   *   - mobiles     (phone lines labeled mobile/cell)
+   *
+   * Returns {} when nothing usable is found — caller should treat fields as
+   * suggestions only, never autosubmit.
+   */
+  parseSignature(bodyText) {
+    const out = { name: '', title: '', phone: '', mobile: '' };
+    if (!bodyText) return out;
+    const lines = bodyText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+    // Find a sign-off line and look at the next non-empty lines as candidates
+    const signoffRe = /^(best regards?|kind regards?|regards|sincerely|cheers|thanks(?:\s+(?:and\s+)?(?:regards|bests?))?|yours\s+truly)[,.]?\s*$/i;
+    let signoffIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+      if (signoffRe.test(lines[i])) { signoffIdx = i; break; }
+    }
+    const tail = signoffIdx >= 0 ? lines.slice(signoffIdx + 1, signoffIdx + 12) : lines.slice(-12);
+
+    // Name = first line in the tail that looks like a person's name (2-4
+    // capitalized words, no @, no digits)
+    const nameRe = /^([A-Z][a-z'’\-]+(?:\s+[A-Z][a-z'’\-]+){1,3})\s*$/;
+    for (const ln of tail) {
+      const m = ln.match(nameRe);
+      if (m) { out.name = m[1]; break; }
+    }
+
+    // Title — first non-name line after the name candidate
+    if (out.name) {
+      const nameIdx = tail.findIndex((l) => l.startsWith(out.name));
+      const afterName = tail.slice(nameIdx + 1, nameIdx + 4);
+      for (const ln of afterName) {
+        if (!/[@+\d]/.test(ln) && ln.length < 80) { out.title = ln; break; }
+      }
+    }
+
+    // Phones: international "+" prefix or 7+ digit clusters with separators
+    const phoneRe = /(\+?\d[\d\s\-().]{6,}\d)/g;
+    const allPhones = [];
+    for (const ln of tail) {
+      const isMobile = /mob(?:ile)?|cell/i.test(ln);
+      let m;
+      while ((m = phoneRe.exec(ln)) !== null) {
+        const num = m[1].replace(/[^\d+]/g, '');
+        if (num.length < 7) continue;
+        allPhones.push({ num, isMobile });
+      }
+    }
+    const mobile = allPhones.find((p) => p.isMobile);
+    if (mobile)            out.mobile = mobile.num;
+    const landline = allPhones.find((p) => !p.isMobile && p.num !== out.mobile);
+    if (landline)          out.phone = landline.num;
+    if (!out.phone && !out.mobile && allPhones[0]) out.phone = allPhones[0].num;
+
+    return out;
+  },
+
   /** Get the email subject (works in read + compose modes). */
   getSubject() {
     return new Promise((resolve) => {
