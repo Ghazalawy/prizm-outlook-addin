@@ -91,6 +91,22 @@
                   </Icon>
                   <Items>
 
+                    <Item id="readOpenHome">
+                      <Label resid="Home.Label"/>
+                      <Supertip>
+                        <Title resid="Home.Label"/>
+                        <Description resid="Home.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.Home.Url"/>
+                      </Action>
+                    </Item>
+
                     <Item id="readCreateTask">
                       <Label resid="CreateTask.Label"/>
                       <Supertip>
@@ -187,22 +203,6 @@
                       </Action>
                     </Item>
 
-                    <Item id="readOpenHome">
-                      <Label resid="Home.Label"/>
-                      <Supertip>
-                        <Title resid="Home.Label"/>
-                        <Description resid="Home.Tooltip"/>
-                      </Supertip>
-                      <Icon>
-                        <bt:Image size="16" resid="Icon.16x16"/>
-                        <bt:Image size="32" resid="Icon.32x32"/>
-                        <bt:Image size="80" resid="Icon.80x80"/>
-                      </Icon>
-                      <Action xsi:type="ShowTaskpane">
-                        <SourceLocation resid="Taskpane.Home.Url"/>
-                      </Action>
-                    </Item>
-
                   </Items>
                 </Control>
               </Group>
@@ -227,21 +227,6 @@
                     <bt:Image size="80" resid="Icon.80x80"/>
                   </Icon>
                   <Items>
-                    <Item id="composeCreateTask">
-                      <Label resid="CreateTask.Label"/>
-                      <Supertip>
-                        <Title resid="CreateTask.Label"/>
-                        <Description resid="CreateTask.Tooltip"/>
-                      </Supertip>
-                      <Icon>
-                        <bt:Image size="16" resid="Icon.16x16"/>
-                        <bt:Image size="32" resid="Icon.32x32"/>
-                        <bt:Image size="80" resid="Icon.80x80"/>
-                      </Icon>
-                      <Action xsi:type="ShowTaskpane">
-                        <SourceLocation resid="Taskpane.CreateTask.Url"/>
-                      </Action>
-                    </Item>
                     <Item id="composeOpenHome">
                       <Label resid="Home.Label"/>
                       <Supertip>
@@ -255,6 +240,21 @@
                       </Icon>
                       <Action xsi:type="ShowTaskpane">
                         <SourceLocation resid="Taskpane.Home.Url"/>
+                      </Action>
+                    </Item>
+                    <Item id="composeCreateTask">
+                      <Label resid="CreateTask.Label"/>
+                      <Supertip>
+                        <Title resid="CreateTask.Label"/>
+                        <Description resid="CreateTask.Tooltip"/>
+                      </Supertip>
+                      <Icon>
+                        <bt:Image size="16" resid="Icon.16x16"/>
+                        <bt:Image size="32" resid="Icon.32x32"/>
+                        <bt:Image size="80" resid="Icon.80x80"/>
+                      </Icon>
+                      <Action xsi:type="ShowTaskpane">
+                        <SourceLocation resid="Taskpane.CreateTask.Url"/>
                       </Action>
                     </Item>
                   </Items>

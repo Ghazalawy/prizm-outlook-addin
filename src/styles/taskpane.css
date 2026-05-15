@@ -151,6 +151,37 @@ html, body {
   .action-tile--done .action-tile__icon { color: #8fd6a8; }
 }
 
+/* ---------- Recent activity (Home, below the tiles) ---------- */
+.activity {
+  margin-top: 16px;
+  padding: 10px 12px;
+  background: var(--prizm-row);
+  border: 1px solid var(--prizm-border);
+  border-radius: var(--prizm-radius);
+}
+.activity__title {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: var(--prizm-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.activity__list { list-style: none; margin: 0; padding: 0; }
+.activity__row {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--prizm-border);
+  font-size: 12.5px;
+}
+.activity__row:first-child { border-top: 0; }
+.activity__icon { color: var(--prizm-primary); min-width: 14px; text-align: center; }
+.activity__link {
+  flex: 1; color: var(--prizm-fg); text-decoration: none; font-weight: 500;
+}
+.activity__link:hover { color: var(--prizm-primary); text-decoration: underline; }
+.activity__when { font-size: 11px; color: var(--prizm-muted); white-space: nowrap; }
+
 /* ---------- Email context banner ---------- */
 .ctx {
   font-size: 11.5px;

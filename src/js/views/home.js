@@ -48,6 +48,42 @@ function captionFor(doneKey, actions) {
   return `${prefix} · created ${fmtWhen(newest.created_at)}`;
 }
 
+// Pretty label per rel_type for the activity list.
+const TYPE_LABEL = {
+  task: 'Task', opportunity: 'Opportunity', lead: 'Lead', ticket: 'Ticket',
+  project: 'Project', customer: 'Customer', invoice: 'Invoice',
+  estimate: 'Estimate', contract: 'Contract',
+};
+const TYPE_ICON = {
+  task: '✓', opportunity: '✯', lead: '★', ticket: '⚠',
+  project: '⛓', customer: '⛓', invoice: '⛓', estimate: '⛓', contract: '⛓',
+};
+
+function buildActivityList(actions) {
+  // Flatten all (type, id, created_at, url) records, sort by date desc.
+  const flat = [];
+  Object.entries(actions || {}).forEach(([type, list]) => {
+    (list || []).forEach((r) => flat.push({ type, ...r }));
+  });
+  if (!flat.length) return null;
+  flat.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+  return el('div', { class: 'activity' },
+    el('h3', { class: 'activity__title', text: 'Recent activity on this email' }),
+    el('ul', { class: 'activity__list' },
+      ...flat.map((r) => el('li', { class: 'activity__row' },
+        el('span', { class: 'activity__icon', text: TYPE_ICON[r.type] || '·' }),
+        el('a', {
+          class: 'activity__link',
+          href: r.url || '#',
+          target: '_blank', rel: 'noopener',
+        }, `${TYPE_LABEL[r.type] || r.type} #${r.id}`),
+        el('span', { class: 'activity__when', text: fmtWhen(r.created_at) }),
+      )),
+    ),
+  );
+}
+
 export async function render() {
   // Render the grid synchronously first so the user sees something even if
   // the email-status round-trip is slow or fails.
@@ -70,12 +106,15 @@ export async function render() {
       }),
     );
 
+    const activity = buildActivityList(actions);
+
     const node = el('div', {},
       el('div', { class: 'card' },
         el('h3', { text: 'Pick an action' }),
         el('p', { text: 'These are also reachable directly from the Prizm ERP menu on any email.' }),
       ),
       grid,
+      activity,
     );
     mount(node);
     mounted = node;

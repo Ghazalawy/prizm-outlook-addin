@@ -123,8 +123,20 @@
   <div class="changelog">
 
     <div class="entry">
-      <h4>Task description split, forward-as-reply, button-order swap, legacy-task awareness</h4>
+      <h4>Forward to assignees, attachments-on-by-default, menu reorder, Home activity list</h4>
       <div class="meta" id="latestBuildTag">build —</div>
+      <ul>
+        <li>"Forward to sender as a reply" → renamed to <em>"Email the assignees"</em>. Uses <code>displayNewMessageForm</code> with assignee emails as <strong>To:</strong> (sender CC'd for context), pre-filled with your description + hyperlinked <em>"Follow up task has been created #N"</em> and your signature.</li>
+        <li>Both attachment checkboxes (<em>email as .eml</em>, <em>files</em>) now default to checked.</li>
+        <li>Manifest menu reordered: <strong>Open Prizm ERP</strong> is now first, followed by all the create actions. (Inline separator isn't supported by VersionOverrides V1.0; if you want a hard divider we'd need to split into two Groups, which would also double the ribbon icons.)</li>
+        <li>Home view now shows a <em>"Recent activity on this email"</em> list under the action tiles when one or more records are linked — each entry is a deep link to the ERP record.</li>
+        <li>Bridge <code>/refdata</code> now includes staff emails so the assignee email flow can address them.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>Task description split, forward-as-reply, button-order swap, legacy-task awareness</h4>
+      <div class="meta">build fd33b9a</div>
       <ul>
         <li><strong>Description</strong> is now an empty field for the user to write task instructions for the assignees. A new <em>"Append the original email body"</em> checkbox controls whether the email content gets stitched in below.</li>
         <li>New <strong>"Forward to sender as a reply"</strong> checkbox: on successful task creation, opens a pre-filled Outlook reply with your description, a hyperlinked <em>"Follow up task has been created #N"</em>, and your signature.</li>

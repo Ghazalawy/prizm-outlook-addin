@@ -16,25 +16,46 @@ import { el, mount, field, row, banner, contextBanner, chipsPicker, asyncSearchP
 function gotoSettings() { window.__prizmGo('/settings'); }
 
 /**
- * Open Outlook's reply composer with the task instructions as the body
- * and a hyperlinked "Follow up task has been created #N" line above the
- * user's signature (Outlook appends signature automatically).
+ * Open Outlook's new-message composer addressed to the task assignees,
+ * pre-filled with the task instructions + a hyperlinked "Follow up task
+ * has been created #N" line. The user's signature is appended automatically
+ * by Outlook below our HTML.
  */
-function openReplyWithTask(result, instructions) {
-  const item = window.Office?.context?.mailbox?.item;
-  if (!item || typeof item.displayReplyForm !== 'function') return;
-  const id = result?.id;
+function openComposeToAssignees(result, instructions, assignees, snap) {
+  const mailbox = window.Office?.context?.mailbox;
+  if (!mailbox || typeof mailbox.displayNewMessageForm !== 'function') return;
+
+  const id  = result?.id;
   const url = result?.url || '';
-  const safeBody = (instructions || '').replace(/[&<>]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c])).replace(/\n/g, '<br>');
+  const safe = (instructions || '')
+    .replace(/[&<>]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]))
+    .replace(/\n/g, '<br>');
   const followLine = url
     ? `<a href="${url}">Follow up task has been created #${id}</a>`
     : `Follow up task has been created #${id}`;
   const html = `
-    <p>${safeBody || '&nbsp;'}</p>
+    <p>${safe || '&nbsp;'}</p>
     <p>&mdash;</p>
     <p>${followLine}</p>
   `;
-  item.displayReplyForm({ htmlBody: html });
+
+  const toRecipients = assignees
+    .map((a) => a.email)
+    .filter((e) => !!e && /@/.test(e));
+  if (!toRecipients.length) return; // nothing to send to
+
+  // If there's an original sender we know about, CC them for context.
+  const ccRecipients = [];
+  if (snap?.from?.email && /@/.test(snap.from.email)) {
+    ccRecipients.push(snap.from.email);
+  }
+
+  mailbox.displayNewMessageForm({
+    toRecipients,
+    ccRecipients,
+    subject: `Task #${id}: ${snap?.subject || 'Follow-up'}`,
+    htmlBody: html,
+  });
 }
 
 // refdata.priorities returns [{id,name,color}] from Perfex's get_tasks_priorities();
@@ -71,9 +92,11 @@ export async function render() {
     if (r) refdata = { ...refdata, ...r };
   } catch (_) { /* offline-friendly fallback */ }
 
-  const priorities = (refdata.priorities || []).map(normalizePriority);
-  const staffList  = (refdata.staff || []).map((s) => ({ id: s.id, name: s.name }));
-  const tagList    = (refdata.tags || []).map((t) => ({ id: t, name: t }));
+  const priorities  = (refdata.priorities || []).map(normalizePriority);
+  const staffList   = (refdata.staff || []).map((s) => ({ id: s.id, name: s.name, email: s.email || '' }));
+  const staffEmails = new Map(staffList.map((s) => [s.id, s.email]));
+  const staffNames  = new Map(staffList.map((s) => [s.id, s.name]));
+  const tagList     = (refdata.tags || []).map((t) => ({ id: t, name: t }));
 
   // Chip pickers — selections survive across re-renders via getSelected()
   const assigneesPicker = chipsPicker({ options: staffList, placeholder: 'Search staff...' });
@@ -117,10 +140,10 @@ export async function render() {
     description: el('textarea', {
       placeholder: 'Task instructions for the assignees…\n(empty by default — write what you want done)',
     }),
-    includeEmail: el('input', { type: 'checkbox', checked: true }),
-    attachEmail:  el('input', { type: 'checkbox', checked: true }),
-    attachFiles:  el('input', { type: 'checkbox', checked: snap.attachments?.length ? true : false }),
-    notifySender: el('input', { type: 'checkbox', checked: false }),
+    includeEmail:    el('input', { type: 'checkbox', checked: true }),
+    attachEmail:     el('input', { type: 'checkbox', checked: true }),
+    attachFiles:     el('input', { type: 'checkbox', checked: true }),     // always on by default
+    notifyAssignees: el('input', { type: 'checkbox', checked: false }),
   };
 
   // Populate the related-record row with the picker; toggle on relatedTo change.
@@ -226,10 +249,17 @@ export async function render() {
       try {
         const result = await Api.createTask(payload);
 
-        // Optional: open a reply form pre-filled with the task instructions
-        // and a hyperlinked task ID. Outlook auto-appends the user's signature.
-        if (inputs.notifySender.checked) {
-          try { openReplyWithTask(result, taskInstructions); } catch (_) { /* non-fatal */ }
+        // Optional: open a new compose addressed to the assignees, pre-filled
+        // with the task instructions + a hyperlinked task ID. Outlook
+        // auto-appends the user's signature.
+        if (inputs.notifyAssignees.checked) {
+          try {
+            const assigneeIds = assigneesPicker.getSelected();
+            const assignees = assigneeIds.map((id) => ({
+              id, email: staffEmails.get(id) || '', name: staffNames.get(id) || '',
+            })).filter((a) => a.email);
+            openComposeToAssignees(result, taskInstructions, assignees, snap);
+          } catch (_) { /* non-fatal */ }
         }
 
         renderSuccess(result);
@@ -280,8 +310,8 @@ export async function render() {
       inputs.attachFiles, el('label', { text: `Attach the ${snap.attachments?.length || 0} email attachment(s) to the task` }),
     ),
     el('div', { class: 'field__check' },
-      inputs.notifySender,
-      el('label', { text: 'Forward to sender as a reply (your description + signature + "Follow up task #" link)' }),
+      inputs.notifyAssignees,
+      el('label', { text: 'Email the assignees with the task details + "Follow up task #" link (signature added by Outlook)' }),
     ),
 
     actionRow,
