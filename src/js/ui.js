@@ -270,7 +270,27 @@ export function asyncSearchPicker({
 
 export function contextBanner(snapshot) {
   const rows = [];
-  if (snapshot.from) {
+  const composeMode = snapshot.mode === 'compose';
+
+  // In read mode, "From" is the sender. In compose mode, it's the user
+  // themselves (not useful) — show "To" instead so the user sees who they're
+  // about to send to (which becomes the candidate assignees / partner contact).
+  if (composeMode) {
+    if (snapshot.to?.length) {
+      const list = snapshot.to.map((r) => r.name ? `${r.name} <${r.email}>` : r.email).join(', ');
+      rows.push(el('div', { class: 'ctx__row' },
+        el('span', { class: 'ctx__label', text: 'To' }),
+        el('span', { class: 'ctx__value', text: list }),
+      ));
+    }
+    if (snapshot.cc?.length) {
+      const list = snapshot.cc.map((r) => r.email).join(', ');
+      rows.push(el('div', { class: 'ctx__row' },
+        el('span', { class: 'ctx__label', text: 'Cc' }),
+        el('span', { class: 'ctx__value', text: list }),
+      ));
+    }
+  } else if (snapshot.from) {
     rows.push(el('div', { class: 'ctx__row' },
       el('span', { class: 'ctx__label', text: 'From' }),
       el('span', { class: 'ctx__value', text: snapshot.from.name ? `${snapshot.from.name} <${snapshot.from.email}>` : snapshot.from.email }),
@@ -282,7 +302,7 @@ export function contextBanner(snapshot) {
       el('span', { class: 'ctx__value', text: snapshot.subject }),
     ));
   }
-  if (snapshot.attachments?.length) {
+  if (!composeMode && snapshot.attachments?.length) {
     rows.push(el('div', { class: 'ctx__row' },
       el('span', { class: 'ctx__label', text: 'Files' }),
       el('span', { class: 'ctx__value', text: snapshot.attachments.map((a) => `${a.name} (${fmtBytes(a.size)})`).join(', ') }),

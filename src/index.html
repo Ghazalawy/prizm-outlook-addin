@@ -123,8 +123,21 @@
   <div class="changelog">
 
     <div class="entry">
-      <h4>Lookup Sender = full domain intel · Add company / Add contact · official icon</h4>
+      <h4>Reverse flow: create task from a draft (compose mode)</h4>
       <div class="meta" id="latestBuildTag">build —</div>
+      <ul>
+        <li>You can now click <em>Prizm ERP → Create Task</em> <strong>while drafting a reply or forward</strong>, not only when reading an email. The add-in detects compose mode and adapts:</li>
+        <li>Task <strong>description is pre-filled from your draft body</strong> (your typed text + the quoted original) — edit freely.</li>
+        <li>Recipients in <em>To:</em> and <em>Cc:</em> that match active staff by email are <strong>auto-selected as assignees</strong> as green chips.</li>
+        <li>Compose-irrelevant checkboxes are hidden (no .eml capture for unsent drafts, no "email assignees" — you're already drafting the email).</li>
+        <li>Context banner switches from <em>From:</em> to <em>To:/Cc:</em> in compose mode.</li>
+        <li>Workflow: write the email + Create Task in the add-in → task logged + task ID anchored in your draft → hit Send in Outlook.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <h4>Lookup Sender = full domain intel · Add company / Add contact · official icon</h4>
+      <div class="meta">build f8ca72b</div>
       <ul>
         <li><strong>Lookup Sender</strong> rewrite: shows domain registration status (customer / partner / vendor with pills), relationship summary (count of invoices / opportunities / projects / tickets / estimates / contracts), the contact-on-file if any, and recent activity rows.</li>
         <li>New <strong>Add Company</strong> and <strong>Add Contact</strong> buttons. Strict rule enforced: <em>"Add contact" is disabled until a customer matching the email's domain is registered</em>. Backend (POST <code>/contacts</code>) also rejects orphan contacts at the API level.</li>

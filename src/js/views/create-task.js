@@ -82,6 +82,7 @@ export async function render() {
   mount(el('div', {}, banner('info', 'Loading email context...')));
 
   const snap = await Office.snapshot();
+  const composeMode = snap.mode === 'compose';
   const todayIso = new Date().toISOString().slice(0, 10);
   const dueIso = new Date(Date.now() + 7 * 86400_000).toISOString().slice(0, 10);
 
@@ -96,10 +97,28 @@ export async function render() {
   const staffList   = (refdata.staff || []).map((s) => ({ id: s.id, name: s.name, email: s.email || '' }));
   const staffEmails = new Map(staffList.map((s) => [s.id, s.email]));
   const staffNames  = new Map(staffList.map((s) => [s.id, s.name]));
+  const staffByEmail = new Map(
+    staffList.filter((s) => s.email).map((s) => [s.email.toLowerCase(), s])
+  );
   const tagList     = (refdata.tags || []).map((t) => ({ id: t, name: t }));
 
+  // In compose mode, auto-suggest assignees from the recipients being addressed
+  // (To: + CC:) matched against the active staff directory by email. So if
+  // the user is forwarding to ahmad@prizm-energy.com, ahmad gets pre-selected
+  // as an assignee with one click to deselect.
+  const preselectedAssignees = composeMode
+    ? [...(snap.to || []), ...(snap.cc || [])]
+        .map((r) => staffByEmail.get((r.email || '').toLowerCase()))
+        .filter(Boolean)
+        .map((s) => s.id)
+    : [];
+
   // Chip pickers — selections survive across re-renders via getSelected()
-  const assigneesPicker = chipsPicker({ options: staffList, placeholder: 'Search staff...' });
+  const assigneesPicker = chipsPicker({
+    options: staffList,
+    placeholder: 'Search staff...',
+    selected: preselectedAssignees,
+  });
   const tagsPicker      = chipsPicker({ options: tagList,   placeholder: 'Search or type tag...', allowCreate: true });
 
   // Related-record picker — async search that switches type when "Related to" changes.
@@ -136,12 +155,16 @@ export async function render() {
     ),
     // Task description — empty by default; the user writes instructions
     // for the assignees. The email body is included separately via the
-    // includeEmail checkbox below.
+    // includeEmail checkbox below. In compose mode we pre-fill it from the
+    // user's draft text so the email AND the task description stay in sync.
     description: el('textarea', {
-      placeholder: 'Task instructions for the assignees…\n(empty by default — write what you want done)',
+      text: composeMode ? (snap.bodyText || '').slice(0, 2000) : '',
+      placeholder: composeMode
+        ? 'Pre-filled from your draft. Edit if needed — this becomes the task description.'
+        : 'Task instructions for the assignees…\n(empty by default — write what you want done)',
     }),
-    includeEmail:    el('input', { type: 'checkbox', checked: true }),
-    attachEmail:     el('input', { type: 'checkbox', checked: true }),
+    includeEmail:    el('input', { type: 'checkbox', checked: !composeMode }),  // already in description if compose
+    attachEmail:     el('input', { type: 'checkbox', checked: !composeMode }),  // unsent draft has no .eml yet
     attachFiles:     el('input', { type: 'checkbox', checked: true }),     // always on by default
     notifyAssignees: el('input', { type: 'checkbox', checked: false }),
   };
@@ -204,6 +227,14 @@ export async function render() {
 
     actionRow.replaceChildren(viewBtn, againBtn);
   }
+
+  // Friendly explainer at the top of the form when we're in compose mode.
+  const composeBanner = composeMode
+    ? banner('info',
+        `Drafting mode — task description is pre-filled from your draft, `
+        + `and ${preselectedAssignees.length} recipient(s) matching active staff `
+        + `have been pre-selected as assignees. Edit anything; submit to log the task.`)
+    : null;
 
   const form = el('form', {
     onsubmit: async (e) => {
@@ -278,6 +309,7 @@ export async function render() {
       }
     },
   },
+    composeBanner,
     contextBanner(snap),
 
     field('Subject', inputs.subject, { required: true }),
@@ -298,21 +330,32 @@ export async function render() {
 
     field('Tags', tagsPicker.node, { hint: 'Type to filter existing tags or pick from list.' }),
 
-    field('Description', inputs.description, { hint: 'What needs to be done. This shows on the task and (if forwarded) in the reply body.' }),
+    field('Description', inputs.description, { hint: composeMode
+      ? 'Captured from your draft. Edit freely — this is what the task will store.'
+      : 'What needs to be done. This shows on the task and (if forwarded) in the reply body.' }),
 
-    el('div', { class: 'field__check' },
+    // Only show "append email body" when in read mode — in compose mode the
+    // description IS the draft body already.
+    composeMode ? null : el('div', { class: 'field__check' },
       inputs.includeEmail, el('label', { text: 'Append the original email body to the task description' }),
     ),
-    el('div', { class: 'field__check' },
+    // .eml capture only makes sense for existing items, not unsent drafts.
+    composeMode ? null : el('div', { class: 'field__check' },
       inputs.attachEmail, el('label', { text: 'Attach the email as .eml file to the task' }),
     ),
-    el('div', { class: 'field__check' },
+    // Email attachments are only readable in read mode — compose mode needs
+    // a different API call (getAttachmentsAsync) that isn't widely supported.
+    composeMode ? null : el('div', { class: 'field__check' },
       inputs.attachFiles, el('label', { text: `Attach the ${snap.attachments?.length || 0} email attachment(s) to the task` }),
     ),
-    el('div', { class: 'field__check' },
+    // In compose mode, the user is already sending an email — no second email needed.
+    composeMode ? null : el('div', { class: 'field__check' },
       inputs.notifyAssignees,
       el('label', { text: 'Email the assignees with the task details + "Follow up task #" link (signature added by Outlook)' }),
     ),
+    composeMode ? el('div', { class: 'field__hint', style: { marginTop: '6px' } },
+      'Tip: after creating the task, finish your draft and hit Send in Outlook — the task ID is already in the description so anyone replying will reference it.'
+    ) : null,
 
     actionRow,
     status,

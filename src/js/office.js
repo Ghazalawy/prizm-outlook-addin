@@ -21,6 +21,18 @@ export const Office = {
     return window.Office.context.mailbox.item;
   },
 
+  /**
+   * Detect whether we're in compose mode (user is drafting/replying/forwarding)
+   * vs read mode (user opened an existing message). In compose mode subject is
+   * an object with getAsync; in read mode it's a plain string. Same for to/cc.
+   */
+  isComposeMode() {
+    const item = this.item();
+    if (!item) return false;
+    // Compose: item.subject has getAsync (function-like object)
+    return !!(item.subject && typeof item.subject === 'object' && typeof item.subject.getAsync === 'function');
+  },
+
   userProfile() {
     return window.Office?.context?.mailbox?.userProfile || {
       displayName: 'Local Test User',
@@ -120,15 +132,20 @@ export const Office = {
   },
 
   /** Recipients: To array (read or compose). */
-  getTo() {
+  getTo() { return this._recipients('to'); },
+  /** Recipients: CC array (read or compose). */
+  getCc() { return this._recipients('cc'); },
+
+  _recipients(field) {
     return new Promise((resolve) => {
       const item = this.item();
-      if (!item || !item.to) { resolve([]); return; }
-      if (Array.isArray(item.to)) {
-        resolve(item.to.map((r) => ({ name: r.displayName || '', email: r.emailAddress || '' })));
+      const ref = item ? item[field] : null;
+      if (!ref) { resolve([]); return; }
+      if (Array.isArray(ref)) {
+        resolve(ref.map((r) => ({ name: r.displayName || '', email: r.emailAddress || '' })));
         return;
       }
-      item.to.getAsync((r) => {
+      ref.getAsync((r) => {
         if (r.status === 'succeeded') {
           resolve((r.value || []).map((x) => ({ name: x.displayName || '', email: x.emailAddress || '' })));
         } else { resolve([]); }
@@ -214,18 +231,22 @@ export const Office = {
   /** Build a snapshot of the current email for any "create from email" view. */
   async snapshot() {
     const item = this.item();
-    const [subject, body, to] = await Promise.all([
+    const composeMode = this.isComposeMode();
+    const [subject, body, to, cc] = await Promise.all([
       this.getSubject(),
       this.getBodyText(),
       this.getTo(),
+      this.getCc(),
     ]);
     const restItemId = this.getRestItemId();
     return {
+      mode: composeMode ? 'compose' : 'read',
       subject,
       bodyText: body,
       bodyExcerpt: (body || '').slice(0, 500),
       from: this.getFrom(),
       to,
+      cc,
       attachments: this.getAttachments(),
       internetMessageId: this.getInternetMessageId(),
       itemId: restItemId,
