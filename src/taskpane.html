@@ -8,7 +8,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Prizm Energy ERP</title>
+  <title>Prizm ERP</title>
 
   <!-- Office.js (required) -->
   <script src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
@@ -23,7 +23,7 @@
   <!-- Loading splash shown until Office.js is ready -->
   <div id="splash" class="splash">
     <img src="assets/logo.png" alt="Prizm Energy" class="splash__logo" />
-    <div class="splash__title">Prizm Energy ERP</div>
+    <div class="splash__title">Prizm ERP</div>
     <div class="splash__spinner"></div>
   </div>
 
@@ -37,11 +37,16 @@
   <!-- Where each view renders. Views replace this content. -->
   <main id="view" class="view" hidden></main>
 
-  <!-- Sticky footer with version + ERP base info -->
+  <!-- Sticky footer: row 1 = version + company site, row 2 = last-updated stamp. -->
   <footer id="footer" class="footer" hidden>
-    <span id="footerVersion">v—</span>
-    <span class="footer__sep">·</span>
-    <a id="footerErpLink" href="#" target="_blank" rel="noopener">ERP</a>
+    <div class="footer__row">
+      <span id="footerVersion">v—</span>
+      <span class="footer__sep">—</span>
+      <a id="footerSiteLink" href="https://www.prizm-energy.com" target="_blank" rel="noopener">www.prizm-energy.com</a>
+    </div>
+    <div class="footer__row footer__row--meta">
+      <span id="footerUpdated">Last updated —</span>
+    </div>
   </footer>
 
   <!-- App entry. type=module so we can use real ES imports. -->

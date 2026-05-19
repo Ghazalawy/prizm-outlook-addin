@@ -377,8 +377,10 @@ html, body {
   border-top: 1px solid var(--prizm-border);
   background: var(--prizm-bg);
   font-size: 11px; color: var(--prizm-muted);
-  display: flex; justify-content: center; gap: 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
 }
+.footer__row { display: flex; justify-content: center; gap: 6px; }
+.footer__row--meta { opacity: 0.75; font-size: 10px; }
 .footer__sep { opacity: 0.5; }
 .footer a { color: var(--prizm-muted); text-decoration: none; }
 .footer a:hover { color: var(--prizm-primary); }

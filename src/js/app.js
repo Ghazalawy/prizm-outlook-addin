@@ -26,11 +26,25 @@ function setupChrome() {
     window.location.replace(u.toString());
   });
 
-  const { erpBase, version } = Config.all();
+  const { version } = Config.all();
   document.getElementById('footerVersion').textContent = `v${version}`;
-  const link = document.getElementById('footerErpLink');
-  link.href = erpBase;
-  link.textContent = new URL(erpBase).hostname;
+
+  // Last-updated stamp comes from release-info.json (written by the deploy
+  // workflow). Falls back silently if served outside GH Pages.
+  const updatedEl = document.getElementById('footerUpdated');
+  fetch('release-info.json', { cache: 'no-store' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((info) => {
+      if (!info?.deployedAt) return;
+      const d = new Date(info.deployedAt);
+      if (Number.isNaN(d.getTime())) return;
+      const pretty = d.toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+      });
+      updatedEl.textContent = `Last updated: ${pretty}`;
+    })
+    .catch(() => { /* leave the placeholder */ });
 }
 
 function registerRoutes() {
