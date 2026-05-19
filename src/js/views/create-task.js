@@ -21,7 +21,7 @@ function gotoSettings() { window.__prizmGo('/settings'); }
  * has been created #N" line. The user's signature is appended automatically
  * by Outlook below our HTML.
  */
-function openComposeToAssignees(result, instructions, assignees, snap) {
+function openComposeToAssignees(result, instructions, assignees, followers, snap) {
   const mailbox = window.Office?.context?.mailbox;
   if (!mailbox || typeof mailbox.displayNewMessageForm !== 'function') return;
 
@@ -44,11 +44,12 @@ function openComposeToAssignees(result, instructions, assignees, snap) {
     .filter((e) => !!e && /@/.test(e));
   if (!toRecipients.length) return; // nothing to send to
 
-  // If there's an original sender we know about, CC them for context.
-  const ccRecipients = [];
-  if (snap?.from?.email && /@/.test(snap.from.email)) {
-    ccRecipients.push(snap.from.email);
-  }
+  // CC the followers (internal staff who want to be kept in the loop).
+  // The original email sender is intentionally NOT auto-CC'd — they are
+  // typically external and should never be looped into internal task chatter.
+  const ccRecipients = (followers || [])
+    .map((f) => f.email)
+    .filter((e) => !!e && /@/.test(e));
 
   mailbox.displayNewMessageForm({
     toRecipients,
@@ -118,6 +119,10 @@ export async function render() {
     options: staffList,
     placeholder: 'Search staff...',
     selected: preselectedAssignees,
+  });
+  const followersPicker = chipsPicker({
+    options: staffList,
+    placeholder: 'Search staff to follow...',
   });
   const tagsPicker      = chipsPicker({ options: tagList,   placeholder: 'Search or type tag...', allowCreate: true });
 
@@ -262,6 +267,7 @@ export async function render() {
         relatedId: related?.id ?? null,
         relatedLabel: related?.label ?? null,
         assignees: assigneesPicker.getSelected(),
+        followers: followersPicker.getSelected(),
         tags: tagsPicker.getSelected(),
         description: combinedDescription,
         email: Office.envelope(snap, {
@@ -285,11 +291,12 @@ export async function render() {
         // auto-appends the user's signature.
         if (inputs.notifyAssignees.checked) {
           try {
-            const assigneeIds = assigneesPicker.getSelected();
-            const assignees = assigneeIds.map((id) => ({
+            const toStaff = (id) => ({
               id, email: staffEmails.get(id) || '', name: staffNames.get(id) || '',
-            })).filter((a) => a.email);
-            openComposeToAssignees(result, taskInstructions, assignees, snap);
+            });
+            const assignees = assigneesPicker.getSelected().map(toStaff).filter((a) => a.email);
+            const followers = followersPicker.getSelected().map(toStaff).filter((a) => a.email);
+            openComposeToAssignees(result, taskInstructions, assignees, followers, snap);
           } catch (_) { /* non-fatal */ }
         }
 
@@ -328,6 +335,8 @@ export async function render() {
 
     field('Assignees', assigneesPicker.node, { hint: 'Type to filter staff. Click to add, × to remove.' }),
 
+    field('Followers', followersPicker.node, { hint: 'Staff to keep in the loop (CC\'d on the notify email if enabled).' }),
+
     field('Tags', tagsPicker.node, { hint: 'Type to filter existing tags or pick from list.' }),
 
     field('Description', inputs.description, { hint: composeMode
@@ -351,7 +360,7 @@ export async function render() {
     // In compose mode, the user is already sending an email — no second email needed.
     composeMode ? null : el('div', { class: 'field__check' },
       inputs.notifyAssignees,
-      el('label', { text: 'Email the assignees with the task details + "Follow up task #" link (signature added by Outlook)' }),
+      el('label', { text: 'Email the assignees (TO) and followers (CC) with the task details + "Follow up task #" link. The original sender is never CC\'d.' }),
     ),
     composeMode ? el('div', { class: 'field__hint', style: { marginTop: '6px' } },
       'Tip: after creating the task, finish your draft and hit Send in Outlook — the task ID is already in the description so anyone replying will reference it.'
